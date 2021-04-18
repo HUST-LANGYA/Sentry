@@ -1,0 +1,7 @@
+#ifndef __BSP_USART3_H
+#define __BSP_USART3_H
+
+#define RX_USART3_BUFFER 30
+void USART3_Configuration(void);
+
+#endif //__BSP_USART3_H
