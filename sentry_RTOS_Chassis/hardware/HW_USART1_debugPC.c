@@ -120,7 +120,7 @@ void USART1_IRQHandler(void)
         DMA_Cmd(DMA1_Channel5, DISABLE); //先关DMA
 //        DMA_ClearFlag( DMA1_FLAG_TE5 );  // 清DMA标志位
 //  //      Judge_Receive(JudgeReceiveBuffer);  //处理从裁判系统接收的数据
-JudgeBuffReceive(JudgeReceiveBuffer,JudgeBufBiggestSize);
+            JudgeBuffReceive(JudgeReceiveBuffer,JudgeBufBiggestSize);
 //  //      Judge_Receive((cur_JudgeReceiveBuffer==JudgeReceiveBuffer_1)?JudgeReceiveBuffer_1:JudgeReceiveBuffer_2); //处理从裁判系统接收的数据
 
 //        
@@ -136,7 +136,9 @@ JudgeBuffReceive(JudgeReceiveBuffer,JudgeBufBiggestSize);
 *形    参: ReceiveBuffer[]  DataLen
 *返 回 值: 无
 **********************************************************************************************************/
-
+uint8_t SaveBuffer[2*JudgeBufBiggestSize];
+tGameInfo JudgeReceive;
+uint16_t Judgement_DisConnect;
 void JudgeBuffReceive(unsigned char ReceiveBuffer[], uint16_t DataLen)
 {
 	uint16_t cmd_id;
@@ -179,7 +181,7 @@ void JudgeBuffReceive(unsigned char ReceiveBuffer[], uint16_t DataLen)
 					memcpy(&JudgeReceive.realChassisOutV, &SaveBuffer[PackPoint + 7 + 0], 2);
 					JudgeReceive.realChassisOutV = JudgeReceive.realChassisOutV / 1000.0f;
 					memcpy(&JudgeReceive.realChassisOutA, &SaveBuffer[PackPoint + 7 + 2], 2);
-					memcpy(&JudgeReceive.realChassispower, &SaveBuffer[PackPoint + 7 + 4], 4);
+					memcpy(&JudgeReceive.realChassisPower, &SaveBuffer[PackPoint + 7 + 4], 4);
 					memcpy(&JudgeReceive.remainEnergy, &SaveBuffer[PackPoint + 7 + 8], 2);
 					memcpy(&JudgeReceive.shooterHeat17, &SaveBuffer[PackPoint + 7 + 10], 2);
 				}

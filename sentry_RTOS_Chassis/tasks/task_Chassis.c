@@ -33,7 +33,6 @@ void task_Chassis(void* parameter)
         else if (Sentry_State.Chassis_Mode == Chassis_RC) Chassis_RC_Act();
         else if (Sentry_State.Chassis_Mode == Chassis_SLEEP) Chassis_SLEEP_Act();
         else if (Sentry_State.Chassis_Mode == Chassis_DEBUG) Chassis_DEBUG_Act();
-//        Chassis_Bodan_CAN1Send(100,100);
         
         vTaskDelay(1);
     }
@@ -56,15 +55,15 @@ static void Chassis_RC_Act(void)
     
     RC_Ctl_t RC_Ctl = getRCData();
 
-    //µ×ÅÌ+ÉÏÔÆÌ¨Ò£¿Ø£º ×óÒ¡¸Ë¿ØÖÆÔÆÌ¨£¬ÓÒÒ¡¸Ë¿ØÖÆµ×ÅÌºÍ·¢Éä
-    if(Sentry_State.Gimbal_Up_Mode == Gimbal_Up_RC /* && Sentry_State.ChassisMode & Chassis_RC*/)
-        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch0-1024/*1043*/); 
-    
-    //µ×ÅÌ+ÏÂÔÆÌ¨Ò£¿Ø£º ÓÒÒ¡¸Ë¿ØÖÆÔÆÌ¨£¬×óÒ¡¸Ë¿ØÖÆµ×ÅÌºÍ·¢Éä
-    if(Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_RC /*&& Sentry_State.ChassisMode & Chassis_RC*/)
-        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch2-1024/*1002*/); 
+//    //µ×ÅÌ+ÉÏÔÆÌ¨Ò£¿Ø£º ×óÒ¡¸Ë¿ØÖÆÔÆÌ¨£¬ÓÒÒ¡¸Ë¿ØÖÆµ×ÅÌºÍ·¢Éä
+//    if(Sentry_State.Gimbal_Up_Mode == Gimbal_Up_RC /* && Sentry_State.ChassisMode & Chassis_RC*/)
+//        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch0-1024/*1043*/); 
+//    
+//    //µ×ÅÌ+ÏÂÔÆÌ¨Ò£¿Ø£º ÓÒÒ¡¸Ë¿ØÖÆÔÆÌ¨£¬×óÒ¡¸Ë¿ØÖÆµ×ÅÌºÍ·¢Éä
+//    if(Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_RC /*&& Sentry_State.ChassisMode & Chassis_RC*/)
+//        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch2-1024/*1002*/); 
 
-    Chassis_RC_PID_Cal();
+    Chassis_SLEEP_PID_Cal();
 }
 
 /**

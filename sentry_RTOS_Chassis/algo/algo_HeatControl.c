@@ -1,11 +1,10 @@
 #include "main.h"
 #include "algo_HeatControl.h"
-
-//变量定义
-//extern JudgeReceive_t JudgeReceive;		//裁判系统接收结构体 热量上限，热量冷却值，当前热量均从裁判系统接收；接收时判断并置位射击完成标志位
+ 
+extern tGameInfo JudgeReceive;		//裁判系统接收结构体 热量上限，热量冷却值，当前热量均从裁判系统接收；接收时判断并置位射击完成标志位
 //F105_Typedef F105;										//与上层板通信 F105.IsShootAble 为允许射击标志位
-extern ext_power_heat_data_t power_heat;
-extern ext_game_robot_status_t robot_status;
+//extern ext_power_heat_data_t power_heat;
+//extern ext_game_robot_status_t robot_status;
 uint8_t IsShootAble=0,HeatUpdateFlag=0,ShootCpltFlag=0;
 
 
@@ -60,9 +59,9 @@ const float HeatControlThreshold = 0.8f;   	//开启热量控制的阈值
 
 void HeatUpdate(void)
 {
-	HeatMax17 = robot_status.shooter_id1_17mm_cooling_limit;
-	HeatCool17 = robot_status.shooter_id1_17mm_cooling_rate/10;
-	CurHeat17 = power_heat.shooter_id1_17mm_cooling_heat;
+    HeatMax17 = JudgeReceive.HeatMax17;
+    HeatCool17 = JudgeReceive.HeatCool17 / 10;
+    CurHeat17 = JudgeReceive.shooterHeat17;
 	
 	if(CurHeat17 != LastHeat17)
 	{

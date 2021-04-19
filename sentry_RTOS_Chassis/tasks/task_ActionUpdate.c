@@ -21,11 +21,11 @@ void task_ActionUpdate(void)
     reset_remote_control_msg(); //刚进任务时，执行一次清零    
     
     //vTaskDelay(900);
-    Sentry_State.Chassis_Mode = Chassis_SLEEP;
+    //Sentry_State.Chassis_Mode = Chassis_SLEEP;
     
     while (1)
     {
-        //update_state_with_RCdata(); //从遥控器更新当前状态
+        update_state_with_RCdata(); //从遥控器更新当前状态
         
         vTaskDelay(1);
     }

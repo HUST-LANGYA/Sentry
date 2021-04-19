@@ -61,8 +61,8 @@ static void update_state_with_RCdata(void)
         case 3:
             sentry_state_reflect(Gimbal_Up_PC,
                                  Gimbal_Dn_PC,
-                                 Shoot_Up_SLEEP,
-                                 Shoot_Dn_SLEEP,
+                                 Shoot_Up_PC,
+                                 Shoot_Dn_PC,
                                  Chassis_SLEEP); 
             break;
         default:
