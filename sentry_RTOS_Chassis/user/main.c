@@ -38,8 +38,8 @@ static void hardware_init(void)
 	TIM3_Config_Encoder(); //AB相读取
     TIM5_Configuration();  //CPU监测
     USART1_Configuration(); // 向电脑发送CPU状态数据  (目前考虑拿这个做和裁判系统通信的接口，但由于F1没有官方给的双缓冲接口，故暂时没有改DMA，用不了)
-//  USART2_Configuration(); // 和裁判系统通信测串口
-    //EXTI_Config_Encoder(); // Z相触发
+//  USART2_Configuration(); // 和裁判系统通信测串口(板上没引出来）
+    TIM1_Config_EncoderZ(); // Z相触发
     GPIO_Config_Phtotelectric_Switch();//光电开关配置
 //    GPIO_Config_Limit_Switch();//行程开关配置
     TIM2_Configuration_Timer();

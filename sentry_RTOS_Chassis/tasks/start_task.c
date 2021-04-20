@@ -65,13 +65,13 @@ static void start_task(void* pvParameters)
 
     taskENTER_CRITICAL();//临界段保护
 
-    //状态更新 Status_Act
-    xTaskCreate((TaskFunction_t)task_ActionUpdate,
-        (const char*)"task_ActionUpdate",
-        (uint16_t)task_ActionUpdate_SIZE,
-        (void*)NULL,
-        (UBaseType_t)task_ActionUpdate_PRIO,
-        (TaskHandle_t*)&task_ActionUpdate_Handler);
+//    //状态更新 Status_Act
+//    xTaskCreate((TaskFunction_t)task_ActionUpdate,
+//        (const char*)"task_ActionUpdate",
+//        (uint16_t)task_ActionUpdate_SIZE,
+//        (void*)NULL,
+//        (UBaseType_t)task_ActionUpdate_PRIO,
+//        (TaskHandle_t*)&task_ActionUpdate_Handler);
 
     //底盘动作任务
     xTaskCreate((TaskFunction_t)task_Chassis,
@@ -89,13 +89,13 @@ static void start_task(void* pvParameters)
 //        (UBaseType_t)task_PowerReadINA_PRIO,
 //        (TaskHandle_t*)&task_PowerReadINA_Handler);
         
-    //读取光电开关状态的任务
-    xTaskCreate((TaskFunction_t)task_PhotoEleSwRead,
-        (const char*)"task_PhotoEleSwRead",
-        (uint16_t)task_PhotoEleSwRead_SIZE,
-        (void*)NULL,
-        (UBaseType_t)task_PhotoEleSwRead_PRIO,
-        (TaskHandle_t*)&task_PhotoEleSwRead_Handler);
+//    //读取光电开关状态的任务
+//    xTaskCreate((TaskFunction_t)task_PhotoEleSwRead,
+//        (const char*)"task_PhotoEleSwRead",
+//        (uint16_t)task_PhotoEleSwRead_SIZE,
+//        (void*)NULL,
+//        (UBaseType_t)task_PhotoEleSwRead_PRIO,
+//        (TaskHandle_t*)&task_PhotoEleSwRead_Handler);
 //        
 ////    //读取行程开关状态的任务
 ////    xTaskCreate((TaskFunction_t)task_LimitSwRead,
@@ -145,14 +145,14 @@ static void start_task(void* pvParameters)
 
 
 
-    ////过零检测任务
-    //// ！ 我看英雄的代码里面没有把过零检测当作一个单独的任务放出来好像
-    xTaskCreate((TaskFunction_t)task_ZeroCheck,
-                (const char*)"task_ZeroCheck",
-                (uint16_t)task_ZeroCheck_SIZE,
-                (void*)NULL,
-                (UBaseType_t)task_ZeroCheck_PRIO,
-                (TaskHandle_t*)&task_ZeroCheck_Handler);
+//    ////过零检测任务
+//    //// ！ 我看英雄的代码里面没有把过零检测当作一个单独的任务放出来好像
+//    xTaskCreate((TaskFunction_t)task_ZeroCheck,
+//                (const char*)"task_ZeroCheck",
+//                (uint16_t)task_ZeroCheck_SIZE,
+//                (void*)NULL,
+//                (UBaseType_t)task_ZeroCheck_PRIO,
+//                (TaskHandle_t*)&task_ZeroCheck_Handler);
 //    //            
 //    ////掉电检测任务
 //    //xTaskCreate((TaskFunction_t)task_BlockDisconnect,

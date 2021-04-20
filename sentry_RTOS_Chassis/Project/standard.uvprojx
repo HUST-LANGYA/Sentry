@@ -828,9 +828,9 @@
               <FilePath>..\hardware\HW_Encoder.c</FilePath>
             </File>
             <File>
-              <FileName>HW_EXTI_EncoderZ.c</FileName>
+              <FileName>HW_TIM_EncoderZ.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\hardware\HW_EXTI_EncoderZ.c</FilePath>
+              <FilePath>..\hardware\HW_TIM_EncoderZ.c</FilePath>
             </File>
             <File>
               <FileName>HW_INA260.c</FileName>

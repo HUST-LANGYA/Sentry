@@ -21,7 +21,7 @@
 
 //Hardware
 #include "HW_TIM2_delay.h"
-#include "HW_EXTI_EncoderZ.h"
+#include "HW_TIM_EncoderZ.h"  //TIM1
 #include "HW_TIM3_Encoder.h"
 #include "HW_TIM5_runtimeCPU.h"
 #include "HW_DBUS.h"

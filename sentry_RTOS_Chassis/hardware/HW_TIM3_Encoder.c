@@ -25,12 +25,6 @@ void TIM3_Config_Encoder(void) //A°¢Bœ‡
     gpioInit.GPIO_Mode = GPIO_Mode_IN_FLOATING;//GPIO_Mode_IPD;
     gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
     GPIO_Init(GPIOA, &gpioInit);
-        
-    GPIO_StructInit(&gpioInit);
-    gpioInit.GPIO_Pin = GPIO_Pin_10; //Zœ‡
-    gpioInit.GPIO_Mode = GPIO_Mode_IN_FLOATING;//GPIO_Mode_IPD;
-    gpioInit.GPIO_Speed = GPIO_Speed_50MHz;
-    GPIO_Init(GPIOA, &gpioInit);
 
     TIM_DeInit(TIM3);
 
