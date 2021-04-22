@@ -38,4 +38,15 @@ typedef struct
 
 void task_ShootDn(void *parameter);
 
+//******************内部函数声明***********************************************//
+static void PID_Shoot_Init(void);  //初始化bodan电机的PID参数
+static void Shoot_RC_Act(void);
+static void Shoot_PC_Act(void);
+static void Shoot_SLEEP_Act(void);
+static void Shoot_DEBUG_Act(void);
+
+static void Shoot_RC_PID_Cal(void);
+static void Shoot_PC_PID_Cal(void);
+inline static void Shoot_SLEEP_PID_Cal(void);
+
 #endif //__TASK_SHOOT_H

@@ -555,9 +555,9 @@
               <FilePath>..\tasks\task_UsageCPU.c</FilePath>
             </File>
             <File>
-              <FileName>DataSendTask.c</FileName>
+              <FileName>task_CV_DataSend.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\tasks\DataSendTask.c</FilePath>
+              <FilePath>..\tasks\task_CV_DataSend.c</FilePath>
             </File>
           </Files>
         </Group>

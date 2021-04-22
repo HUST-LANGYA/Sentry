@@ -1,4 +1,5 @@
 #include "main.h"
+#include "task_ShootDn.h"
 
 _2006_motor_t BodanMotor;
 int16_t num, speed;
@@ -8,16 +9,7 @@ extern int16_t Shoot_init_flag;
 extern State_t Sentry_State;
 extern block_disconnect_t block_disconnect;
 
-//******************内部函数声明***********************************************//
-static void PID_Shoot_Init(void);  //初始化bodan电机的PID参数
-static void Shoot_RC_Act(void);
-static void Shoot_PC_Act(void);
-static void Shoot_SLEEP_Act(void);
-static void Shoot_DEBUG_Act(void);
 
-static void Shoot_RC_PID_Cal(void);
-static void Shoot_PC_PID_Cal(void);
-inline static void Shoot_SLEEP_PID_Cal(void);
 
 void task_ShootDn(void *parameter)
 {

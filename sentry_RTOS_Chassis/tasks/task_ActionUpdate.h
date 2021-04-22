@@ -36,4 +36,12 @@ typedef struct
 
 void task_ActionUpdate(void);
 
+
+static void update_state_with_RCdata(void);
+static void sentry_state_reflect(uint8_t gimbal_up_mode,
+                                 uint8_t gimbal_dn_mode,
+                                 uint8_t shoot_up_mode,
+                                 uint8_t shoot_dn_mode,
+                                 uint8_t chassis_mode); //reflect当作做一个映射的意思吧
+
 #endif //__TASK_ACTIONUPDATE_H

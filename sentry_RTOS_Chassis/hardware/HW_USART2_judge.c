@@ -3,8 +3,8 @@
 
 // ! 有一个尴尬的事情，好像底盘板上面没有引出USART2的口子，这里还是先用USART1配置吧
 
-uint8_t JudgeReceiveBuffer[JudgeBufBiggestSize];    //从裁判系统接收的数据
-uint8_t JudgeSendBuffer[JudgeSendBufSize];          //向裁判系统发出的数据
+extern uint8_t JudgeReceiveBuffer[JudgeBufBiggestSize];    //从裁判系统接收的数据
+extern uint8_t JudgeSendBuffer[JudgeSendBufSize];          //向裁判系统发出的数据
 
 
 /**

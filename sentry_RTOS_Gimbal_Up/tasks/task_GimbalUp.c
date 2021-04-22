@@ -20,23 +20,6 @@ extern gyro_Typedef Gyro_White;
 extern State_t Sentry_State;
 
 
-//******************内部函数声明***********************************************//
-static float CombPitchOutput(void); //获取滤波后的pitch角度的函数
-static float CombYawOutput(void);   //获取滤波后的yaw角度的函数
-static void Gimbal_Limit(void);//云台角度限幅函数
-static void PID_Gimbal_Init(void);
-static void Gimbal_GYRO_Cal(void);
-
-static void Gimbal_RC_Act(void);
-static void Gimbal_PC_Act(void);
-static void Gimbal_SLEEP_Act(void);
-static void Gimbal_DEBUG_Act(void);
-
-
-static void Gimbal_RC_PID_Cal(void);
-static void Gimbal_PC_PID_Cal(void);
-inline static void Gimbal_SLEEP_PID_Cal(void);
-
 //内核对象句柄
 //extern QueueHandle_t anglePitch_MsgQueue;//倾角（姿态）的消息队列句柄
 
@@ -190,31 +173,6 @@ static void Gimbal_SLEEP_Act(void)
     Gimbal_SLEEP_PID_Cal();
 }
 
-/**
-  * @brief  上云台旋转角度限位
-  * @param  None
-  * @retval None
-  */
-static void Gimbal_Limit(void)
-{
-        PITCH_MAX_ANGLE = /*PITCH_GYRO_OFFSET +*/ 20;//省赛不需要扫正角度
-        PITCH_ZERO_POS = /*PITCH_GYRO_OFFSET */+ 0;
-        PITCH_MIN_ANGLE = /*PITCH_GYRO_OFFSET -*/ -36;//5+Yaw_Actual/3.0f;  //有个小问题，就是yaw绝对值较大的时候，pitch低头45°会打到玻纤板，所以这里用个函数改一下实时限位值
-        
-        YAW_MAX_ANGLE = /*YAW_GYRO_OFFSET +*/ 40;
-        YAW_ZERO_POS  = /*YAW_GYRO_OFFSET + */ 0;
-        YAW_MIN_ANGLE = /*YAW_GYRO_OFFSET */- 40;
-
-
-
-        PATROL_PITCH_MAX_ANGLE = /*PITCH_GYRO_OFFSET +*/ 0;//省赛不需要扫正角度
-        PATROL_PITCH_ZERO_POS = /*PITCH_GYRO_OFFSET */+ 0;
-        PATROL_PITCH_MIN_ANGLE = /*PITCH_GYRO_OFFSET -*/ -30;//5+Yaw_Actual/3.0f;  //有个小问题，就是yaw绝对值较大的时候，pitch低头45°会打到玻纤板，所以这里用个函数改一下实时限位值
-        
-        PATROL_YAW_MAX_ANGLE = /*YAW_GYRO_OFFSET +*/ 30;
-        PATROL_YAW_ZERO_POS  = /*YAW_GYRO_OFFSET + */ 0;
-        PATROL_YAW_MIN_ANGLE = /*YAW_GYRO_OFFSET */- 30;
-}
 
 float Limit = 6.0f;
 int16_t testYawI = 0, testPitchI = 0;
@@ -303,6 +261,33 @@ static void Gimbal_GYRO_Cal(void)
 }
 
 /**
+  * @brief  上云台旋转角度限位
+  * @param  None
+  * @retval None
+  */
+static void Gimbal_Limit(void)
+{
+        PITCH_MAX_ANGLE = /*PITCH_GYRO_OFFSET +*/ +0;//省赛不需要扫正角度
+        PITCH_ZERO_POS = /*PITCH_GYRO_OFFSET */+ 0;
+        PITCH_MIN_ANGLE = /*PITCH_GYRO_OFFSET -*/ -36;//5+Yaw_Actual/3.0f;  //有个小问题，就是yaw绝对值较大的时候，pitch低头45°会打到玻纤板，所以这里用个函数改一下实时限位值
+        
+        YAW_MAX_ANGLE = /*YAW_GYRO_OFFSET +*/ 40;
+        YAW_ZERO_POS  = /*YAW_GYRO_OFFSET + */ 0;
+        YAW_MIN_ANGLE = /*YAW_GYRO_OFFSET */- 40;
+
+
+        //巡逻的范围一般比限位的范围要窄，因为相机的广角足够宽
+        PATROL_PITCH_MAX_ANGLE = /*PITCH_GYRO_OFFSET +*/ 0;//省赛不需要扫正角度
+        PATROL_PITCH_ZERO_POS = /*PITCH_GYRO_OFFSET */+ 0;
+        PATROL_PITCH_MIN_ANGLE = /*PITCH_GYRO_OFFSET -*/ -30;//5+Yaw_Actual/3.0f;  //有个小问题，就是yaw绝对值较大的时候，pitch低头45°会打到玻纤板，所以这里用个函数改一下实时限位值
+        
+        PATROL_YAW_MAX_ANGLE = /*YAW_GYRO_OFFSET +*/ 30;
+        PATROL_YAW_ZERO_POS  = /*YAW_GYRO_OFFSET + */ 0;
+        PATROL_YAW_MIN_ANGLE = /*YAW_GYRO_OFFSET */- 30;
+}
+
+
+/**
   * @brief  云台电机pid初始化
   * @param  None
   * @retval None
@@ -341,7 +326,7 @@ static void PID_Gimbal_Init(void)
 
 
 
-
+//////////////////////////////////////////////////////////////
     MotoYaw.PidPos.P = 0;
     MotoYaw.PidPos.I =0;
     MotoYaw.PidPos.D = 0;
@@ -380,7 +365,7 @@ static void PID_Gimbal_Init(void)
     MotoYaw.PidSpeedV.IMax = 0.0f;
     
     
-
+////////////////////////////////////////////////////////////////////////
     MotoPitch.zerocheck.CountCycle = 8191;
     MotoPitch.zerocheck.Circle = 0;
     MotoPitch.zerocheck.LastValue = MotoPitch.Angle_ABS;

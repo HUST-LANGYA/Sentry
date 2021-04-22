@@ -20,8 +20,8 @@ void CAN1_DataReceive_1(void);
 void CAN2_DataReceive_0(void);
 void CAN2_DataReceive_1(void);
 
-//这个是USART1跳接收中断时进入的函数,解裁判系统的(难搞（；′д｀）ゞ)
-void JudgeBuffReceive(uint8_t ReceiveBuffer[]);
+////这个是USART1跳接收中断时进入的函数,解裁判系统的(难搞（；′д｀）ゞ)
+//void JudgeBuffReceive(uint8_t ReceiveBuffer[]);
 
 
 

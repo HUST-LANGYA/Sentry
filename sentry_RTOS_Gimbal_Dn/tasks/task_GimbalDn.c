@@ -20,25 +20,6 @@ extern gyro_Typedef Gyro_White;
 extern State_t Sentry_State;
 
 
-//******************内部函数声明***********************************************//
-static float CombPitchOutput(void); //获取滤波后的pitch角度的函数
-static float CombYawOutput(void);   //获取滤波后的yaw角度的函数
-static void Gimbal_Limit(void);//云台角度限幅函数
-static void PID_Gimbal_Init(void);
-static void Gimbal_GYRO_Cal(void);
-
-static void Gimbal_RC_Act(void);
-static void Gimbal_PC_Act(void);
-static void Gimbal_SLEEP_Act(void);
-static void Gimbal_DEBUG_Act(void);
-
-static void Gimbal_RC_PID_Cal(void);
-static void Gimbal_PC_PID_Cal(void);
-inline static void Gimbal_SLEEP_PID_Cal(void);
-
-//内核对象句柄
-//extern QueueHandle_t anglePitch_MsgQueue;//倾角（姿态）的消息队列句柄
-
 /**
  * @brief 云台任务主体
  * @param 无
@@ -139,7 +120,7 @@ static void Gimbal_RC_Act(void)
   * @retval None
   */
 float TestV_Pitch = 0, TestV_Yaw = 0;
-float patrol_step_pitch = 0.09f,patrol_step_yaw = 0.025f;
+float patrol_step_pitch = 0.09f,patrol_step_yaw = 0.1f;
 uint8_t patrol_dir_yaw = 0,patrol_dir_pitch = 0;  //标志两轴电机当前巡逻的方向，0表示--，1表示++
 float patrol_set_pitch = 0.0f,patrol_set_yaw = 0.0f;  //巡逻设定值更新
 //FilterFIR filterPC;//滤波器变量
@@ -181,11 +162,11 @@ static void Gimbal_PC_Act(void)
     {//若相机未捕捉到装甲，则进入巡逻模式，云台姿态以一个特定的步长来步进
         if((patrol_set_pitch + patrol_step_pitch >= PITCH_MAX_ANGLE) &&  patrol_dir_pitch) patrol_dir_pitch = 0; //电机到上限反向 
         if((patrol_set_pitch - patrol_step_pitch <= PITCH_MIN_ANGLE) && !patrol_dir_pitch) patrol_dir_pitch = 1; //电机到下限反向 
-        if((patrol_set_yaw   + patrol_step_yaw   >=  YAW_MAX_ANGLE ) &&    patrol_dir_yaw) patrol_dir_yaw   = 0; //电机到左限反向 
-        if((patrol_set_yaw   - patrol_step_yaw   <=  YAW_MIN_ANGLE ) &&   !patrol_dir_yaw) patrol_dir_yaw   = 1; //电机到右限反向 
+//        if((patrol_set_yaw   + patrol_step_yaw   >=  YAW_MAX_ANGLE ) &&    patrol_dir_yaw) patrol_dir_yaw   = 0; //电机到左限反向 
+//        if((patrol_set_yaw   - patrol_step_yaw   <=  YAW_MIN_ANGLE ) &&   !patrol_dir_yaw) patrol_dir_yaw   = 1; //电机到右限反向 
         patrol_set_pitch += (patrol_dir_pitch)?(+patrol_step_pitch):(-patrol_step_pitch);
-        patrol_set_yaw   += ( patrol_dir_yaw )?( +patrol_step_yaw ):( -patrol_step_yaw );
-       // patrol_set_yaw   += patrol_step_yaw ;
+//        patrol_set_yaw   += ( patrol_dir_yaw )?( +patrol_step_yaw ):( -patrol_step_yaw );
+        patrol_set_yaw   += patrol_step_yaw ;
         
         MotoPitch.PidPosV.SetPoint = patrol_set_pitch;
         MotoYaw.PidPosV.SetPoint   = patrol_set_yaw;
@@ -200,28 +181,6 @@ static void Gimbal_SLEEP_Act(void)
 {
     //! 应该还是要设置一下flag之类的东西在这里
     Gimbal_SLEEP_PID_Cal();
-}
-
-/**
-  * @brief  下云台旋转角度限位
-  * @param  None
-  * @retval None
-  */
-static void Gimbal_Limit(void)
-{
-        //注：云台水平时 pitch=180 （也可能是0，和陀螺仪安装的方向有关）
-        PITCH_MAX_ANGLE = /*PITCH_GYRO_OFFSET + */+0;
-        PITCH_ZERO_POS = /*PITCH_GYRO_OFFSET + */0;
-        PITCH_MIN_ANGLE = /*PITCH_GYRO_OFFSET*/ -46;
-      
-//        //注： 由于YAW轴的setpoint是增量式的，故这个限幅的改动可以改变旋转的速度
-//        YAW_MAX_ANGLE = Yaw_Actual + 60;
-//        YAW_ZERO_POS = Yaw_Actual + 0;
-//        YAW_MIN_ANGLE = Yaw_Actual - 60;
-
-    YAW_MAX_ANGLE = +75;
-    YAW_ZERO_POS  = 0;
-    YAW_MIN_ANGLE = -75;
 }
 
 
@@ -314,6 +273,29 @@ static void Gimbal_GYRO_Cal(void)
 }
 
 /**
+  * @brief  下云台旋转角度限位
+  * @param  None
+  * @retval None
+  */
+static void Gimbal_Limit(void)
+{
+        //注：云台水平时 pitch=180 （也可能是0，和陀螺仪安装的方向有关）
+        PITCH_MAX_ANGLE = /*PITCH_GYRO_OFFSET + */+0;
+        PITCH_ZERO_POS = /*PITCH_GYRO_OFFSET + */0;
+        PITCH_MIN_ANGLE = /*PITCH_GYRO_OFFSET*/ -46;
+      
+//        //注： 由于YAW轴的setpoint是增量式的，故这个限幅的改动可以改变旋转的速度
+//        YAW_MAX_ANGLE = Yaw_Actual + 60;
+//        YAW_ZERO_POS = Yaw_Actual + 0;
+//        YAW_MIN_ANGLE = Yaw_Actual - 60;
+
+    YAW_MAX_ANGLE = +75;
+    YAW_ZERO_POS  = 0;
+    YAW_MIN_ANGLE = -75;
+}
+
+
+/**
   * @brief  云台电机pid初始化
   * @param  None
   * @retval None
@@ -352,7 +334,7 @@ static void PID_Gimbal_Init(void)
 
 
 
-
+/////////////////////////////////////////////////////////
 
 	MotoYaw.PidPos.P = -300.0f;
 	MotoYaw.PidPos.I =-10.0f;
@@ -391,6 +373,10 @@ static void PID_Gimbal_Init(void)
     MotoYaw.PidSpeedV.I_Limit = 0;//1.0f;
     MotoYaw.PidSpeedV.IMax = 0;//5.0f;
 
+
+
+
+/////////////////////////////////////////////////////////////
     MotoPitch.zerocheck.CountCycle = 8191;
     MotoPitch.zerocheck.Circle = 0;
     MotoPitch.zerocheck.LastValue = MotoPitch.Angle_ABS;

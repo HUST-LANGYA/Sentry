@@ -43,14 +43,11 @@ static void hardware_init(void)
     TIM2_Configuration();  //延时TIM
     delay_ms(1000);  //等陀螺仪初始化完成
     LED_Configuration();//点上云台状态灯
-    //delay_ms(100);
     TIM5_Configuration();  //TIM5监测cpu运行时间 
     delay_ms(100);    
     TIM8_Configuration();  //PWM输出给到上摩擦轮   
-    //delay_ms(100);
     FrictionWheel_Init();
     USART2_Configuration();  //和PC通信用
-    //delay_ms(100);
     USART3_Configuration();  //和遥控器通信用
 //    delay_ms(100);
 //    UART4_Configuration();  //发送cpu运行状态
@@ -58,7 +55,7 @@ static void hardware_init(void)
     CAN_Configuration();
     //delay_ms(100);
 
-    IWDG_Config(IWDG_Prescaler_64,625);
+    //IWDG_Config(IWDG_Prescaler_64,625);
 }
 
 /*inline */TickType_t GetSysCnt(void)

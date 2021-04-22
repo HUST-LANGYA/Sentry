@@ -7,13 +7,6 @@ int16_t Gimbal_init_flag, RC_Change_Flag_now, RC_Change_Flag_last;
 int16_t Shoot_init_flag = 0;
 //int32_t SetSpeed,RC_Chassis_scal = 5;
 
-static void update_state_with_RCdata(void);
-static void sentry_state_reflect(uint8_t gimbal_up_mode,
-                                 uint8_t gimbal_dn_mode,
-                                 uint8_t shoot_up_mode,
-                                 uint8_t shoot_dn_mode,
-                                 uint8_t chassis_mode);  //reflect当作做一个映射的意思吧
-
 /**
  * @brief 状态机本体，执行每次的状态刷新
  * @param 无
@@ -42,8 +35,6 @@ void task_ActionUpdate(void)
   * @param  None
   * @retval None
   */
-// int16_t PC_DownFlag;
-// int32_t time, tim_now;
 static void update_state_with_RCdata(void)
 {
     RC_Ctl_t RC_Ctl = getRCData();
@@ -53,7 +44,7 @@ static void update_state_with_RCdata(void)
     case 1:
         switch (RC_Ctl.rc.s2)
         {
-        case 1:
+        case 1://正式上轨运行模式，比赛用
             sentry_state_reflect(Gimbal_Up_PC,
                                  Gimbal_Dn_PC,
                                  Shoot_Up_PC,
@@ -61,18 +52,18 @@ static void update_state_with_RCdata(void)
                                  Chassis_Patrol);
             break;
         case 2:
-            sentry_state_reflect(Gimbal_Up_PC,
-                                 Gimbal_Dn_PC,
+            sentry_state_reflect(Gimbal_Up_SLEEP,
+                                 Gimbal_Dn_SLEEP,
                                  Shoot_Up_SLEEP,
                                  Shoot_Dn_SLEEP,
-                                 Chassis_RC);
+                                 Chassis_SLEEP);
             break;
         case 3:
-            sentry_state_reflect(Gimbal_Up_RC,
-                                 Gimbal_Dn_RC,
-                                 Shoot_Up_SLEEP,
-                                 Shoot_Dn_SLEEP,
-                                 Chassis_Patrol); 
+            sentry_state_reflect(Gimbal_Up_PC,
+                                 Gimbal_Dn_PC,
+                                 Shoot_Up_PC,
+                                 Shoot_Dn_PC,
+                                 Chassis_SLEEP); 
             break;
         default:
             break;
@@ -81,25 +72,25 @@ static void update_state_with_RCdata(void)
     case 2:
         switch (RC_Ctl.rc.s2)
         {
-        case 1:
+        case 1://上云台检录打子弹
             sentry_state_reflect(Gimbal_Up_SLEEP,
                                  Gimbal_Dn_SLEEP,
-                                 Shoot_Up_RC,
+                                 ((RC_Ctl.rc.ch1>1500)?Shoot_Up_RC:Shoot_Up_SLEEP),
                                  Shoot_Dn_SLEEP,
                                  Chassis_SLEEP); 
             break;
-        case 2:
+        case 2://掉电模式
             sentry_state_reflect(Gimbal_Up_SLEEP,
                                  Gimbal_Dn_SLEEP,
                                  Shoot_Up_SLEEP,
                                  Shoot_Dn_SLEEP,
                                  Chassis_SLEEP);             
             break;
-        case 3:
+        case 3://下云台检录打子弹
             sentry_state_reflect(Gimbal_Up_SLEEP,
                                  Gimbal_Dn_SLEEP,
                                  Shoot_Up_SLEEP,
-                                 Shoot_Dn_RC,
+                                 ((RC_Ctl.rc.ch1>1500)?Shoot_Dn_RC:Shoot_Dn_SLEEP),
                                  Chassis_SLEEP);        
             break;
         default:
@@ -110,20 +101,20 @@ static void update_state_with_RCdata(void)
         switch (RC_Ctl.rc.s2)
         {
         case 1:
-            sentry_state_reflect(Gimbal_Up_RC,
+            sentry_state_reflect(Gimbal_Up_SLEEP,
                                  Gimbal_Dn_SLEEP,
-                                 Shoot_Up_PC,
+                                 Shoot_Up_SLEEP,
                                  Shoot_Dn_SLEEP,
-                                 Chassis_RC);             
+                                 Chassis_SLEEP);             
             break;
         case 2:
-            sentry_state_reflect(Gimbal_Up_RC,
-                                 Gimbal_Dn_RC,
-                                 Shoot_Up_PC,
-                                 Shoot_Dn_PC,
+            sentry_state_reflect(Gimbal_Up_SLEEP,
+                                 Gimbal_Dn_SLEEP,
+                                 Shoot_Up_SLEEP,
+                                 Shoot_Dn_SLEEP,
                                  Chassis_SLEEP);              
             break;
-        case 3:
+        case 3://底盘检录模式，底盘运动
             sentry_state_reflect(Gimbal_Up_SLEEP,
                                  Gimbal_Dn_SLEEP,
                                  Shoot_Up_SLEEP,
@@ -139,6 +130,8 @@ static void update_state_with_RCdata(void)
     }
 }
 
+
+
 static void sentry_state_reflect(uint8_t gimbal_up_mode,
                                  uint8_t gimbal_dn_mode,
                                  uint8_t shoot_up_mode,
@@ -151,24 +144,4 @@ static void sentry_state_reflect(uint8_t gimbal_up_mode,
     Sentry_State.Shoot_Dn_Mode  =  shoot_dn_mode  ;
     Sentry_State.Chassis_Mode   =  chassis_mode   ;  
 }
-
-// void Change_Check(void)
-// {
-//     RC模式下
-//     if(Sentry_State.GimbalMode & Gimbal_Up_RC)
-//     {
-//       RC_Change_Flag_now=1;
-//       if(RC_Change_Flag_now != RC_Change_Flag_last)
-//           Gimbal_init_flag=0;
-//       RC_Change_Flag_last=RC_Change_Flag_now;
-//     }
-//     else if(Sentry_State.GimbalMode & Gimbal_Up_PC)
-//     {
-//         RC_Change_Flag_now=0;
-//     }
-//     else
-//     {
-//         RC_Change_Flag_now=0;
-//     }
-// }
 

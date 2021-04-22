@@ -18,13 +18,11 @@ void task_LimitSwRead(void)
     R_state = 0;
     while (1)
     {
-        //        if(Sentry_State.Chassis_Mode != Chassis_SLEEP)
-        //        {
-       LimitSw_State = Limit_Both_IDLE;
+
+       //LimitSw_State = Limit_Both_IDLE;
        LimitSw_State = (LimitSw_L == LimitSw_L_Active) ? \
                         (LimitSw_R == LimitSw_R_Active ? Limit_Both_Active : Limit_Left_Active) : \
                         (LimitSw_R == LimitSw_R_Active ? Limit_Right_Active : Limit_Both_IDLE);
-        //        }*/
       
 //        L_state = LimitSw_L;
 //        R_state = LimitSw_R;

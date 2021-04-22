@@ -5,12 +5,28 @@ extern CanRxMsg Can1_rx_message_0, Can1_rx_message_1, Can2_rx_message_0, Can2_rx
 
 int32_t test_receive;
 /**
- * @brief  lalalalala
+ * @brief  2006摩擦轮信息接收
  * @param  None
  * @retval None
  */
 void CAN1_DataReceive_0(void)
 {
+    extern _2006_motor_t FrictionMotor[2];
+    //extern block_disconnect_t block_disconnect;
+    if (Can1_rx_message_0.StdId == FrictionMotor_Up_0_ID)
+    {
+        //block_disconnect.Pitch_Last_Cnt = GetSysCnt();
+        FrictionMotor[0].Angle_ABS = Can1_rx_message_0.Data[0] << 8 | Can1_rx_message_0.Data[1];
+        FrictionMotor[0].RealSpeed = Can1_rx_message_0.Data[2] << 8 | Can1_rx_message_0.Data[3];
+        //rx_test++;
+    }
+    else if (Can1_rx_message_0.StdId == FrictionMotor_Up_1_ID)
+    {
+        //block_disconnect.Yaw_Last_Cnt = GetSysCnt();
+
+        FrictionMotor[1].Angle_ABS = Can1_rx_message_0.Data[0] << 8 | Can1_rx_message_0.Data[1];
+        FrictionMotor[1].RealSpeed = Can1_rx_message_0.Data[2] << 8 | Can1_rx_message_0.Data[3];
+    }
 }
 
 /**

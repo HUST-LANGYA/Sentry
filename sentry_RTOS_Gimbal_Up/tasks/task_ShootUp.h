@@ -13,8 +13,7 @@
 #define FrictionWheel_R_Speed_Off 0
 
 #define BodanCurrentLimit 10000
-#define BodanCurrentLimit 10000
-#define FrictionCurrentLimit 1000
+#define FrictionCurrentLimit 7500
 
 typedef struct
 {
@@ -31,12 +30,23 @@ typedef struct
 
 typedef struct
 {
-	uint16_t angle; //0~8191(0x1fff)
-	int16_t real_speed;	  //
+	uint16_t angle;		//0~8191(0x1fff)
+	int16_t real_speed; //
 	PID_Typedef pid;
 	int16_t I_Set;
 } _3510_motor_t;
 
 void task_ShootUp(void *parameter);
+
+//******************内部函数声明***********************************************//
+static void PID_Shoot_Init(void); //初始化bodan电机的PID参数
+static void Shoot_RC_Act(void);
+static void Shoot_PC_Act(void);
+static void Shoot_SLEEP_Act(void);
+static void Shoot_DEBUG_Act(void);
+
+static void Shoot_RC_PID_Cal(void);
+static void Shoot_PC_PID_Cal(void);
+inline static void Shoot_SLEEP_PID_Cal(void);
 
 #endif //__TASK_SHOOT_H

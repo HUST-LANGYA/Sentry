@@ -14,12 +14,10 @@ void task_PhotoEleSwRead(void)
     PhotoEle_State = PhotoEle_Both_IDLE;
     while (1)
     {
-        //        if(Sentry_State.Chassis_Mode != Chassis_SLEEP)
-        //        {
         PhotoEle_State = (PhotoEleSw_L == PhotoEleSw_Active) ? \
                          (PhotoEleSw_R == PhotoEleSw_Active ? PhotoEle_Both_Active : PhotoEle_Left_Active) : \
                          (PhotoEleSw_R == PhotoEleSw_Active ? PhotoEle_Right_Active : PhotoEle_Both_IDLE);
-        //        }
+
         vTaskDelay(5);
     }
 }

@@ -2,23 +2,14 @@
 #include "task_ShootUp.h"
 
 _2006_motor_t BodanMotor;
+_2006_motor_t FrictionMotor[2];
+
 int16_t num, speed;
 int16_t Is_Shoot;
 
 extern int16_t Shoot_init_flag;
 extern State_t Sentry_State;
 extern block_disconnect_t block_disconnect;
-
-//******************内部函数声明***********************************************//
-static void PID_Shoot_Init(void); //初始化bodan电机的PID参数
-static void Shoot_RC_Act(void);
-static void Shoot_PC_Act(void);
-static void Shoot_SLEEP_Act(void);
-static void Shoot_DEBUG_Act(void);
-
-static void Shoot_RC_PID_Cal(void);
-static void Shoot_PC_PID_Cal(void);
-inline static void Shoot_SLEEP_PID_Cal(void);
 
 void task_ShootUp(void *parameter)
 {
@@ -44,7 +35,6 @@ uint32_t shootDelayTick;          //记录单连发模式下，每两发子弹之间的实时时间间
 float testInc = 29510.0f;         //26910.0f;//拨一颗弹丸需给到pos的增量值
 uint32_t delayTick_oneShot = 200; //走掉一颗弹丸间隔的时间(ms)
 float bodanLastPos;               //存放上次单发结束时的拨弹电机位置值
-
 
 static void Shoot_DEBUG_Act(void)
 {
@@ -81,12 +71,13 @@ static void aiming(void)
         ABS((PC_Receive.RCPitch - Pitch_Actual)) <= pitch_thresh &&
         ABS((PC_Receive.RCYaw - Yaw_Actual)) <= yaw_thresh)
         CV_Shoot_ABLE = 1;
-    else CV_Shoot_ABLE = 0;
+    else
+        CV_Shoot_ABLE = 0;
 }
 static void Shoot_PC_Act(void)
 {
     FrictionWheel_SetSpeed(750, 750); //*设置摩擦轮
-    extern uint8_t CV_Shoot_ABLE;  //判定视觉方面是否能够打子弹
+    extern uint8_t CV_Shoot_ABLE;     //判定视觉方面是否能够打子弹
     aiming();
     if (CV_Shoot_ABLE)
     {
@@ -105,7 +96,7 @@ static void Shoot_PC_Act(void)
 
 static void Shoot_RC_Act(void)
 {
-    FrictionWheel_SetSpeed(FrictionWheel_L_Speed_Low,FrictionWheel_R_Speed_Low);//*设置摩擦轮
+    FrictionWheel_SetSpeed(FrictionWheel_L_Speed_Low, FrictionWheel_R_Speed_Low); //*设置摩擦轮
     //FrictionWheel_SetSpeed(650, 650);
 
     shootDelayTick++;

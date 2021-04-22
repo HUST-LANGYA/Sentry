@@ -16,7 +16,6 @@ int main(void)
     //那么数值越小，抢占优先级的级别越高，即 0 代表最高优先级，15 代表最低优先级。 
     
     hardware_init();  //老规矩 上电初始化
-    //delay_ms(100);
     start_the_very_first_task();   //这个函数来开启引导任务
     vTaskStartScheduler();   //开启任务调度器（后面vans了就）
     while (1) {}
@@ -39,8 +38,8 @@ static void hardware_init(void)
 	TIM3_Config_Encoder(); //AB相读取
     TIM5_Configuration();  //CPU监测
     USART1_Configuration(); // 向电脑发送CPU状态数据  (目前考虑拿这个做和裁判系统通信的接口，但由于F1没有官方给的双缓冲接口，故暂时没有改DMA，用不了)
-//  USART2_Configuration(); // 和裁判系统通信测串口
-    //EXTI_Config_Encoder(); // Z相触发
+//  USART2_Configuration(); // 和裁判系统通信测串口(板上没引出来）
+    TIM1_Config_EncoderZ(); // Z相触发
     GPIO_Config_Phtotelectric_Switch();//光电开关配置
 //    GPIO_Config_Limit_Switch();//行程开关配置
     TIM2_Configuration_Timer();

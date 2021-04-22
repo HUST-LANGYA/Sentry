@@ -18,8 +18,11 @@
 #define MotoPitch_ID 0x205
 #define MotoYaw_ID 0x206
 
+#define FrictionMotor_Up_0_ID 0x201
+#define FrictionMotor_Up_1_ID 0x202
+
 #define BodanMotor_Up_ID 0x203
-#define SHOOTING_HEAT_ID 0x706   //接收枪口热量数据的报头ID
+#define SHOOTING_HEAT_ID 0x706 //接收枪口热量数据的报头ID
 
 typedef struct GYRO
 {
@@ -43,17 +46,15 @@ typedef struct GYRO
 
 } gyro_Typedef;
 
-
 typedef struct
 {
-    float RCPitch;
-    float RCYaw;
-    float RCdistance;
-    short ReceiveFromTx2BulletCnt;
-    short FrictionWheel_speed;
-    short DisConnect;
-}PC_Receive_t;
-
+	float RCPitch;
+	float RCYaw;
+	float RCdistance;
+	short ReceiveFromTx2BulletCnt;
+	short FrictionWheel_speed;
+	short DisConnect;
+} PC_Receive_t;
 
 void CAN1_DataReceive_0(void);
 void CAN1_DataReceive_1(void);
@@ -61,10 +62,8 @@ void CAN2_DataReceive_0(void);
 void CAN2_DataReceive_1(void);
 void PCReceive(uint8_t Buf[]);
 
-
-#define ARMOR_NO_AIM	0xff	//没有找到目标
-#define ARMOR_AIMED		0x30	//有目标
-
+#define ARMOR_NO_AIM 0xff //没有找到目标
+#define ARMOR_AIMED 0x30  //有目标
 
 #pragma anon_unions
 /* ----------------------- RC Channel Definition---------------------------- */

@@ -40,7 +40,6 @@ void Bodan_Can2Send(int16_t bodanVal)
 	CAN_Transmit(CAN2, &tx_message);
 }
 
-
 /**
   * @brief  云台电机消息发送	
   * @param  两轴电机转速的设定值
@@ -64,6 +63,41 @@ void Gyro_Can2Send(int16_t pitch, int16_t yaw)
 	CAN_Transmit(CAN2, &tx_message);
 }
 
+void Friction_Can1Send(int16_t fric0, int16_t fric1) //发拨弹电流
+{
+	CanTxMsg tx_message;
+	tx_message.IDE = CAN_ID_STD;
+	tx_message.RTR = CAN_RTR_DATA;
+	tx_message.DLC = 0x08;
+	tx_message.StdId = 0x200;
+
+	fric0 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
+	fric1 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
+
+	tx_message.Data[0] = (uint8_t)((fric0 >> 8) & 0xff);
+	tx_message.Data[1] = (uint8_t)(fric0 & 0xff);
+	tx_message.Data[2] = (uint8_t)((fric1 >> 8) & 0xff);
+	tx_message.Data[3] = (uint8_t)(fric1 & 0xff);
+
+	CAN_Transmit(CAN1, &tx_message);
+}
+
+// void Friction_Can2Send(int16_t fric0, int16_t fric1) //发拨弹电流
+// {
+// 	CanTxMsg tx_message;
+// 	tx_message.IDE = CAN_ID_STD;
+// 	tx_message.RTR = CAN_RTR_DATA;
+// 	tx_message.DLC = 0x08;
+// 	tx_message.StdId = 0x200;
+
+// 	fric0 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
+// 	fric1 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
+
+// 	tx_message.Data[0] = (uint8_t)((fric0 >> 8) & 0xff);
+// 	tx_message.Data[1] = (uint8_t)(fric0 & 0xff);
+// 	tx_message.Data[2] = (uint8_t)((fric1 >> 8) & 0xff);
+// 	tx_message.Data[3] = (uint8_t)(fric1 & 0xff);
+// }
 
 /**
   * @brief  给到底盘和下云台主控板的遥控数据(MD直接把遥控器的原始数据给过去吧，压缩一下给过去)
@@ -76,27 +110,26 @@ void Remote_Can1Send(void)
 {
 	// !  这个函数把从遥控器接收的数据转发给底盘和下云台
 	// !  但这个函数目前有很严重的问题！通信非常的不稳定！
-    extern RC_Ctl_t RC_Ctl ;//= getRCData();
-    if(RC_Ctl.rc.s1 && RC_Ctl.rc.s2)  //如果是零包就丢掉（虽然我还是没整清楚零包是怎么出现的MD）
-    {
-        CAN1_tx_message_remote.IDE = CAN_ID_STD;
-        CAN1_tx_message_remote.RTR = CAN_RTR_DATA;
-        CAN1_tx_message_remote.DLC = 0x08;
-        CAN1_tx_message_remote.StdId = Remote_Control_ID;
+	extern RC_Ctl_t RC_Ctl;			  //= getRCData();
+	if (RC_Ctl.rc.s1 && RC_Ctl.rc.s2) //如果是零包就丢掉（虽然我还是没整清楚零包是怎么出现的MD）
+	{
+		CAN1_tx_message_remote.IDE = CAN_ID_STD;
+		CAN1_tx_message_remote.RTR = CAN_RTR_DATA;
+		CAN1_tx_message_remote.DLC = 0x08;
+		CAN1_tx_message_remote.StdId = Remote_Control_ID;
 
-        CAN1_tx_message_remote.Data[0] = (uint8_t)((RC_Ctl.rc.ch0>>3) & 0xff);
-        CAN1_tx_message_remote.Data[1] = (uint8_t)((RC_Ctl.rc.ch0<<5)|(RC_Ctl.rc.ch1>>6) & 0xff);
-        CAN1_tx_message_remote.Data[2] = (uint8_t)((RC_Ctl.rc.ch1<<2)|(RC_Ctl.rc.ch2>>9) & 0xff);
-        CAN1_tx_message_remote.Data[3] = (uint8_t)((RC_Ctl.rc.ch2>>1) & 0xff);
-        CAN1_tx_message_remote.Data[4] = (uint8_t)((RC_Ctl.rc.ch2<<7)|(RC_Ctl.rc.ch3>>4) & 0xff);
-        CAN1_tx_message_remote.Data[5] = (uint8_t)((RC_Ctl.rc.ch3<<4)|((RC_Ctl.rc.s1<<2) & 0x0C)|((RC_Ctl.rc.s2) & 0x03) & 0xff);
-//        //Data[6]和Data[7]暂时预留
-//        CAN1_tx_message_remote.Data[6] = 0;
-//        CAN1_tx_message_remote.Data[7] = 0;    
-        CAN_Transmit(CAN1, &CAN1_tx_message_remote);
-    }
+		CAN1_tx_message_remote.Data[0] = (uint8_t)((RC_Ctl.rc.ch0 >> 3) & 0xff);
+		CAN1_tx_message_remote.Data[1] = (uint8_t)((RC_Ctl.rc.ch0 << 5) | (RC_Ctl.rc.ch1 >> 6) & 0xff);
+		CAN1_tx_message_remote.Data[2] = (uint8_t)((RC_Ctl.rc.ch1 << 2) | (RC_Ctl.rc.ch2 >> 9) & 0xff);
+		CAN1_tx_message_remote.Data[3] = (uint8_t)((RC_Ctl.rc.ch2 >> 1) & 0xff);
+		CAN1_tx_message_remote.Data[4] = (uint8_t)((RC_Ctl.rc.ch2 << 7) | (RC_Ctl.rc.ch3 >> 4) & 0xff);
+		CAN1_tx_message_remote.Data[5] = (uint8_t)((RC_Ctl.rc.ch3 << 4) | ((RC_Ctl.rc.s1 << 2) & 0x0C) | ((RC_Ctl.rc.s2) & 0x03) & 0xff);
+		//        //Data[6]和Data[7]暂时预留
+		//        CAN1_tx_message_remote.Data[6] = 0;
+		//        CAN1_tx_message_remote.Data[7] = 0;
+		CAN_Transmit(CAN1, &CAN1_tx_message_remote);
+	}
 }
-
 
 //void USART3SEND(uint8_t* msg)
 //{
@@ -161,14 +194,15 @@ void PC_MsgSend(uint8_t State)
 	}
 	Append_CRC8_Check_Sum(PC_SendBuf + 1, PC_SEND_BUF_SIZE - 2);
 	PC_SendBuf[7] = '#';
-    
-    for(int t=0;t<8;t++)
-    {
-//        if(t>0&&t<7)
-//            PC_SendBuf[t] = 'A'+t-1;        
-        USART_SendData(USART2,PC_SendBuf[t]);
-        while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET);
-    }
+
+	for (int t = 0; t < 8; t++)
+	{
+		//        if(t>0&&t<7)
+		//            PC_SendBuf[t] = 'A'+t-1;
+		USART_SendData(USART2, PC_SendBuf[t]);
+		while (USART_GetFlagStatus(USART2, USART_FLAG_TXE) == RESET)
+			;
+	}
 	DMA_Cmd(DMA1_Stream6, ENABLE);
 }
 

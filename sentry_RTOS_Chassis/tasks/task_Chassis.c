@@ -14,15 +14,7 @@ float PowerNow;
 PID_Typedef PowerLimit;
 float PowerLimit_k=0.8;
 
-static void Chassis_Patrol_Act(void);
-static void Chassis_RC_Act(void);
-static void Chassis_SLEEP_Act(void);
-static void Chassis_DEBUG_Act(void);
-static void Chassis_Patrol_PID_Cal(void);
-static void Chassis_RC_PID_Cal(void);
-inline static void Chassis_SLEEP_PID_Cal(void);
-static void Chassis_DEBUG_PID_Cal(void);
-static void PID_Chassis_Init(void);
+
 
 int16_t encoder_veloc = 0;
 int32_t encoder_distance = 0;//用编码器记录到减速段之前的最大距离
@@ -34,15 +26,13 @@ void task_Chassis(void* parameter)
     while (1)
     {
         HeatUpdate();   //计算枪口热量值，这个函数的输出值，会通过CAN发送到上下云台板上去
-        ShootingHeat_CAN2Send();
-        
+        ShootingHeat_CAN2Send();        
         encoder_distance = Read_Encoder();
         
         if (Sentry_State.Chassis_Mode == Chassis_Patrol) Chassis_Patrol_Act();
         else if (Sentry_State.Chassis_Mode == Chassis_RC) Chassis_RC_Act();
         else if (Sentry_State.Chassis_Mode == Chassis_SLEEP) Chassis_SLEEP_Act();
         else if (Sentry_State.Chassis_Mode == Chassis_DEBUG) Chassis_DEBUG_Act();
-//        Chassis_Bodan_CAN1Send(100,100);
         
         vTaskDelay(1);
     }
@@ -65,15 +55,15 @@ static void Chassis_RC_Act(void)
     
     RC_Ctl_t RC_Ctl = getRCData();
 
-    //底盘+上云台遥控： 左摇杆控制云台，右摇杆控制底盘和发射
-    if(Sentry_State.Gimbal_Up_Mode == Gimbal_Up_RC /* && Sentry_State.ChassisMode & Chassis_RC*/)
-        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch0-1024/*1043*/); 
-    
-    //底盘+下云台遥控： 右摇杆控制云台，左摇杆控制底盘和发射
-    if(Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_RC /*&& Sentry_State.ChassisMode & Chassis_RC*/)
-        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch2-1024/*1002*/); 
+//    //底盘+上云台遥控： 左摇杆控制云台，右摇杆控制底盘和发射
+//    if(Sentry_State.Gimbal_Up_Mode == Gimbal_Up_RC /* && Sentry_State.ChassisMode & Chassis_RC*/)
+//        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch0-1024/*1043*/); 
+//    
+//    //底盘+下云台遥控： 右摇杆控制云台，左摇杆控制底盘和发射
+//    if(Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_RC /*&& Sentry_State.ChassisMode & Chassis_RC*/)
+//        motor_chassis.pid.SetPoint=kChassis*(RC_Ctl.rc.ch2-1024/*1002*/); 
 
-    Chassis_RC_PID_Cal();
+    Chassis_SLEEP_PID_Cal();
 }
 
 /**

@@ -11,10 +11,10 @@ void task_StateLED(void)
     {  
         BLUE_light_toggle();
         vTaskDelay(500);
-        IWDG_Feed();
+        //IWDG_Feed();
         RED_light_toggle();
         vTaskDelay(500);
-        IWDG_Feed();
+        //IWDG_Feed();
     }
 }
 

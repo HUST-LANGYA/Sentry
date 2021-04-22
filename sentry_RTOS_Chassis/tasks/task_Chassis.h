@@ -35,4 +35,14 @@ typedef struct
 void task_Chassis(void* parameter);
 void PID_Chassis_ClearError(void);
 
+static void Chassis_Patrol_Act(void);
+static void Chassis_RC_Act(void);
+static void Chassis_SLEEP_Act(void);
+static void Chassis_DEBUG_Act(void);
+static void Chassis_Patrol_PID_Cal(void);
+static void Chassis_RC_PID_Cal(void);
+inline static void Chassis_SLEEP_PID_Cal(void);
+static void Chassis_DEBUG_PID_Cal(void);
+static void PID_Chassis_Init(void);
+
 #endif //__TASK_CHASSIS_H

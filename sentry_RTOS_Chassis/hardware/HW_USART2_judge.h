@@ -6,7 +6,7 @@
 //#define PC_SEND_BUF_SIZE	8
 
 #ifndef JudgeBufBiggestSize
-#define JudgeBufBiggestSize 48  //原先是24，但我感觉如果要接收所有裁判系统的信息，24好像不够长
+#define JudgeBufBiggestSize 40  //原先是24，但我感觉如果要接收所有裁判系统的信息，24好像不够长
 #endif //JudgeBufBiggestSize
 #define JudgeSendBufSize 22
 
