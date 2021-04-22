@@ -71,8 +71,8 @@ void Friction_Can1Send(int16_t fric0, int16_t fric1) //发拨弹电流
 	tx_message.DLC = 0x08;
 	tx_message.StdId = 0x200;
 
-	fric0 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
-	fric1 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
+	fric0 = LIMIT_MAX_MIN(fric0, FrictionCurrentLimit, -FrictionCurrentLimit);
+	fric1 = LIMIT_MAX_MIN(fric1, FrictionCurrentLimit, -FrictionCurrentLimit);
 
 	tx_message.Data[0] = (uint8_t)((fric0 >> 8) & 0xff);
 	tx_message.Data[1] = (uint8_t)(fric0 & 0xff);
@@ -90,8 +90,8 @@ void Friction_Can1Send(int16_t fric0, int16_t fric1) //发拨弹电流
 // 	tx_message.DLC = 0x08;
 // 	tx_message.StdId = 0x200;
 
-// 	fric0 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
-// 	fric1 = LIMIT_MAX_MIN(bodanVal, FrictionCurrentLimit, -FrictionCurrentLimit);
+// 	fric0 = LIMIT_MAX_MIN(fric0, FrictionCurrentLimit, -FrictionCurrentLimit);
+// 	fric1 = LIMIT_MAX_MIN(fric1, FrictionCurrentLimit, -FrictionCurrentLimit);
 
 // 	tx_message.Data[0] = (uint8_t)((fric0 >> 8) & 0xff);
 // 	tx_message.Data[1] = (uint8_t)(fric0 & 0xff);

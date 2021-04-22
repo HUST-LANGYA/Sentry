@@ -9,8 +9,6 @@ extern LimitSWState_t LimitSw_State;
 //int16_t Shoot_init_flag = 0;
 //int32_t SetSpeed,RC_Chassis_scal = 5;
 
-
-
 /**
  * @brief 状态机本体，执行每次的状态刷新
  * @param 无
@@ -18,15 +16,16 @@ extern LimitSWState_t LimitSw_State;
  */
 void task_ActionUpdate(void)
 {
-    reset_remote_control_msg(); //刚进任务时，执行一次清零    
-    
+    reset_remote_control_msg(); //刚进任务时，执行一次清零
+
     //vTaskDelay(900);
     //Sentry_State.Chassis_Mode = Chassis_SLEEP;
-    
+
     while (1)
     {
         update_state_with_RCdata(); //从遥控器更新当前状态
-        
+        Remote_Can2Send();          //转发遥控器的指令
+
         vTaskDelay(1);
     }
 }
