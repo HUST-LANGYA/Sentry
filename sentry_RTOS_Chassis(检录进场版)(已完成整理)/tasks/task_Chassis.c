@@ -1,0 +1,404 @@
+#include "main.h"
+#include "task_Chassis.h"
+
+
+_3508_motor_t motor_chassis;
+extern State_t Sentry_State;
+extern block_disconnect_t block_disconnect;
+
+//初始化相关的标志位
+uint8_t chassisFlag_Init=0;
+int16_t test_init_flag=0;
+
+//受击策略相关
+extern uint16_t last_remainHP,cur_remainHP;
+extern uint16_t is_Under_Attack; //如果受击，则将该变量置于某个单稳态的值
+
+
+////功率参数
+float maxPower = 30.0f;
+float PowerNow = 0.0f;
+float PowerLimit_k=0.8f;
+uint16_t remainEnergy;
+
+//运动状态变量
+MovingDir_t movingDir;//当前行进的方向  1为向右 0为向左  
+uint16_t waitingTick;//在端头暂停的时间
+uint32_t movingTick;//运动中计数器
+int16_t last_encoder_abs,cur_encoder_abs;
+
+//位置融合相关变量
+extern LimitSWState_t LimitSw_State;//行程开关状态
+extern PhotoEleSWState_t PhotoEle_State;  //光电开关状态
+extern PhotoEleSWState_t Last_PhotoEle_State,Cur_PhotoEle_State;//这个用来做步数的更新
+extern _encoder_t encoder;
+int32_t encoder_distance = 0;//用编码器记录到减速段之前的最大距离
+int32_t encoder_round = 0; //记录编码器转过的圈数
+
+
+//受击后逃跑相关
+uint8_t set_escape_period = 3;  //受击后的巡逻来回数
+uint8_t cur_escape_period = 0; //当前巡逻的来回数 ，一旦受击后，这个变量就清零，然后如果cur和set有差，则一直巡逻
+//以右侧光电开关触发来计数
+
+
+static void Chassis_Patrol_Act(void);
+static void Chassis_RC_Act(void);
+static void Chassis_SLEEP_Act(void);
+static void Chassis_DEBUG_Act(void);
+static void Chassis_Patrol_PID_Cal(void);
+static void Chassis_RC_PID_Cal(void);
+inline static void Chassis_SLEEP_PID_Cal(void);
+static void Chassis_DEBUG_PID_Cal(void);
+static void PID_Chassis_Init(void);
+
+void task_Chassis(void* parameter)
+{
+    //进入任务时执行一次复位
+    PID_Chassis_Init(); //第一次执行底盘任务时 给底盘的PID参数进行初始化
+    
+   //编码器计数初始化部分
+    TIM_SetCounter(TIM3,22463);
+    encoder.angle_abs = 22463;//假装上电时它在轨道的靠右边
+	encoder.zerocheck.CountCycle = 65535; //虽然这里初始化了编码器过零检测的结构体，但经实测，2021赛季的轨道不会溢出int16_t长度
+	encoder.zerocheck.LastValue = encoder.angle_abs;
+	encoder.zerocheck.Circle = 0;
+    
+    //运动策略初始化部分
+    cur_escape_period = set_escape_period; //设定初始时已完成逃跑，即静止不动
+    
+    while (1)
+    {
+        //枪口热量控制的部分（赛后有时间的话把它分到一个单独的任务里去）
+        //TODO! 可以把这个热量计算的部分分到一个单独的任务里
+        HeatUpdate_0();   //计算枪口热量值，这个函数的输出值，会通过CAN发送到上下云台板上去
+        HeatUpdate_2();   //17mm枪管的ID号按偶数增长的
+        ShootingHeat_CAN2Send();    //发送给上下云台的热量数据
+        
+        //编码器读位置融合相关
+        encoder.angle_abs = Read_Encoder();
+        last_encoder_abs = cur_encoder_abs;
+        cur_encoder_abs =  encoder.angle_abs;  
+        
+        //底盘实时功率读取相关
+        extern tGameInfo JudgeReceive;
+        extern INA260 INA260_1;
+        if(maxPower != JudgeReceive.MaxPower)  maxPower = JudgeReceive.MaxPower; 
+        // 如果当前设定的最大功率不是裁判系统给的最大功率，就更新一次
+        // 目的是为了避免出现离线调试时和上场之后的返回数据不同的错误
+        PowerNow = INA260_1.Power / 1000.0f + 1.9;  //实测裁判系统读到的功率值比INA260的要高约1.9W
+        remainEnergy = JudgeReceive.remainEnergy;   //跟随裁判系统来更新剩余能量
+             
+        //位置融合更新
+        if(LimitSw_State == Limit_Right_Active)  
+            TIM_SetCounter(TIM3,22469),encoder.angle_abs = 22469;//encoder.angle_inc = 22469;
+        if(LimitSw_State == Limit_Left_Active)
+            TIM_SetCounter(TIM3,0),encoder.angle_abs = 0;
+        if(Last_PhotoEle_State == PhotoEle_Both_IDLE 
+            && Cur_PhotoEle_State == PhotoEle_Right_Active)  
+            TIM_SetCounter(TIM3,21327),encoder.angle_abs = 21327;
+        if(Last_PhotoEle_State == PhotoEle_Both_IDLE 
+            && Cur_PhotoEle_State == PhotoEle_Left_Active)
+            TIM_SetCounter(TIM3,781),encoder.angle_abs = 781; 
+        
+        //受击状态更新
+        if(cur_remainHP<last_remainHP && JudgeReceive.hurt_type != 0x04) 
+        {//用hunter_type来判定不是因为底盘超功率而造成的掉血
+            is_Under_Attack = 10000;  //受击状态的保持用单稳态递减计数
+            cur_escape_period = 0;    //逃跑回数的计数用递增计数
+        }
+        if(is_Under_Attack) is_Under_Attack--;  //单稳递减
+              
+        if (Sentry_State.Chassis_Mode == Chassis_Patrol) Chassis_Patrol_Act();
+        else if (Sentry_State.Chassis_Mode == Chassis_RC) Chassis_RC_Act();
+        else if (Sentry_State.Chassis_Mode == Chassis_SLEEP) Chassis_SLEEP_Act();
+        else if (Sentry_State.Chassis_Mode == Chassis_DEBUG) Chassis_DEBUG_Act();
+        
+        vTaskDelay(1);
+    }
+}
+
+/**
+  * @brief  PC模式下底盘的运动
+  * @param  None
+  * @retval None
+  */
+uint8_t chassisFlag_Patrol_Init=0; //初始化的标志位
+static void Chassis_Patrol_Act(void)
+{
+    //轨道分段变量
+    static uint16_t  railThreshold_R;  
+    static uint16_t  railThreshold_L;
+    static uint8_t railSeg_Flag; //三个状态，标志是在L段、M段还是R段
+
+    //中间段变向相关
+    static uint32_t mid_movingTick_RtoL; //用于中段变向的计数器
+    static uint8_t mid_reverse_flag_RtoL;//标志在中间段是变向前还是变向后
+    static uint32_t mid_movingTick_LtoR; //用于中段变向的计数器
+    static uint8_t mid_reverse_flag_LtoR;//标志在中间段是变向前还是变向后
+
+    if(chassisFlag_Patrol_Init == 0)
+    {
+        railThreshold_L = 4000;
+        railThreshold_R = 18469;
+        srand(29);  //这个随机数种子初始化和底盘的运动变向有关
+        chassisFlag_Patrol_Init=1; 
+    }
+    
+    //根据运动状态，做计数器计数
+    if(PhotoEle_State == PhotoEle_Both_IDLE) 
+    {//两边都未触发
+//        if(motor_chassis.pid.SetPoint)
+//        {//若是正常运动，waitingTick清零，movingTick++
+            waitingTick = 0;
+            movingTick++;
+//        }
+//        else 
+//        {
+//           //若是人为暂停，则同时清零waitingTick和movingTick
+//           waitingTick = 0;
+//           movingTick = 0;
+//        }
+    }
+    else if((PhotoEle_State == PhotoEle_Left_Active) || (LimitSw_State == Limit_Left_Active) )  
+    {//左侧触发（￣︶￣）↗　，运动暂停，movingTick清零，waitingTick++, 运动变向
+        waitingTick++;
+        movingTick = 0;
+        movingDir = MovingDir_R;
+    }
+    else if( (PhotoEle_State == PhotoEle_Right_Active) || (LimitSw_State == Limit_Right_Active ) )
+    {//右侧触发（￣︶￣）↗　，运动暂停，movingTick清零，waitingTick++, 运动变向
+        waitingTick++;
+        movingTick = 0;
+        movingDir = MovingDir_L;
+    }
+    else if(PhotoEle_State == PhotoEle_Both_Active ) 
+    {//双边触发，考虑为人为暂停情况
+        waitingTick = 1;//报错！！！！
+        movingTick = 0;
+    }
+    
+
+    
+    if(encoder.angle_abs < railThreshold_L)  railSeg_Flag = RailSeg_L;
+    else if(encoder.angle_abs >= railThreshold_L && encoder.angle_abs <= railThreshold_R)  railSeg_Flag = RailSeg_M;
+    else if(encoder.angle_abs > railThreshold_R)  railSeg_Flag = RailSeg_R;
+    
+    //根据计数值，改变运动状态
+    if(waitingTick>0 && waitingTick<100 && movingTick == 0) 
+    {//暂停状态0速
+        motor_chassis.pid.SetPoint = 0;
+    }
+    else if(waitingTick>100 && movingTick == 0)
+    {//从零启动的1速状态
+        motor_chassis.pid.SetPoint = (movingDir)?(-1500):(1500);    
+    }
+    else
+    {//阶梯加速，防止单阶跃功率过大导致底盘超功率挂掉
+        if(waitingTick == 0 && movingTick > 60)
+            motor_chassis.pid.SetPoint = (movingDir)?(-2000):(2000);   //从1速开始再加一次速的2速状态 
+        if(waitingTick == 0 && movingTick > 100)
+            motor_chassis.pid.SetPoint = (movingDir)?(-2500):(2500);   //从1速开始再加一次速的2速状态
+        if(waitingTick == 0 && movingTick > 200)
+            motor_chassis.pid.SetPoint = (movingDir)?(-3200):(3200);   //从2速开始再加一次速的3速状态  
+        if(waitingTick == 0 && movingTick > 300)
+            motor_chassis.pid.SetPoint = (movingDir)?(-4000):(4000);   //从3速开始再加一次速的4速状态 
+        if(waitingTick == 0 && movingTick > 350)
+            motor_chassis.pid.SetPoint = (movingDir)?(-4300):(4300);    
+        if(waitingTick == 0 && movingTick > 480 && movingTick < 810)   //810ms加速段结束后就把这个速度的控制权交给编码器了
+            motor_chassis.pid.SetPoint = (movingDir)?(-5200):(5200);    
+    }
+    
+    
+    //中间段随机变向
+    if(!(rand() % 2))
+    {
+        if((last_encoder_abs < 13200)
+          && (cur_encoder_abs >= 13200)
+          && movingDir == MovingDir_R
+          && !mid_reverse_flag_RtoL)//且在向右运动
+        {   
+            mid_movingTick_RtoL=0;  //清空中间段计数器
+            motor_chassis.pid.SetPoint = (movingDir)?(-1800):(1800); //先减一段速        
+            mid_reverse_flag_RtoL = 1; //中间段触发置位
+        }
+        if(mid_reverse_flag_RtoL)
+        {//中间段反向后
+            mid_movingTick_RtoL++;
+            //阶梯加速
+            if(mid_movingTick_RtoL >50 )   { motor_chassis.pid.SetPoint = 0;movingDir = MovingDir_L; }//先变向，再加速
+            if(mid_movingTick_RtoL > 100)  motor_chassis.pid.SetPoint = (movingDir)?(-1800):(1800);
+            if(mid_movingTick_RtoL > 200)  motor_chassis.pid.SetPoint = (movingDir)?(-2500):(2500);
+            if(mid_movingTick_RtoL > 300)  motor_chassis.pid.SetPoint = (movingDir)?(-3200):(3200);
+            if(mid_movingTick_RtoL > 400)  motor_chassis.pid.SetPoint = (movingDir)?(-4000):(4000);
+            if(mid_movingTick_RtoL > 500)  motor_chassis.pid.SetPoint = (movingDir)?(-4600):(4600);
+            if(mid_movingTick_RtoL > 600)  motor_chassis.pid.SetPoint = (movingDir)?(-5200):(5200);
+            if(mid_movingTick_RtoL > 700)  motor_chassis.pid.SetPoint = (movingDir)?(-5200):(5200);       
+        }
+        if(mid_movingTick_RtoL>1000) mid_reverse_flag_RtoL = 0,mid_movingTick_RtoL = 0;//中间段变向标志的超时复位
+    }
+    
+    if(rand() % 2)
+    {
+        if((last_encoder_abs >= 9500)
+          && (cur_encoder_abs < 9500)
+          && movingDir == MovingDir_L
+          && !mid_reverse_flag_LtoR)//且在向左运动
+        {   
+            mid_movingTick_LtoR=0;  //清空中间段计数器
+            motor_chassis.pid.SetPoint = (movingDir)?(-1800):(1800); //先减一段速        
+            mid_reverse_flag_LtoR = 1; //中间段触发置位
+        }
+        if(mid_reverse_flag_LtoR)
+        {//中间段反向后,阶梯加速
+            mid_movingTick_LtoR++;
+            if(mid_movingTick_LtoR >50 )   { motor_chassis.pid.SetPoint = 0;movingDir = MovingDir_R; }//先变向，再加速
+            if(mid_movingTick_LtoR > 100)  motor_chassis.pid.SetPoint = (movingDir)?(-1800):(1800);
+            if(mid_movingTick_LtoR > 200)  motor_chassis.pid.SetPoint = (movingDir)?(-2500):(2500);
+            if(mid_movingTick_LtoR > 300)  motor_chassis.pid.SetPoint = (movingDir)?(-3200):(3200);
+            if(mid_movingTick_LtoR > 400)  motor_chassis.pid.SetPoint = (movingDir)?(-4000):(4000);
+            if(mid_movingTick_LtoR > 500)  motor_chassis.pid.SetPoint = (movingDir)?(-4600):(4600);
+            if(mid_movingTick_LtoR > 600)  motor_chassis.pid.SetPoint = (movingDir)?(-5200):(5200);
+            if(mid_movingTick_LtoR > 700)  motor_chassis.pid.SetPoint = (movingDir)?(-5200):(5200);       
+        }
+        if(mid_movingTick_LtoR>1000) mid_reverse_flag_LtoR = 0,mid_movingTick_LtoR = 0;//中间段变向标志的超时复位
+    }   
+    
+    //左右两端靠近立柱段的减速（先用编码器值减速，在用光电开关的触发来反向）
+    if(movingDir == MovingDir_L && railSeg_Flag == RailSeg_L)  motor_chassis.pid.SetPoint = (movingDir)?(-1500):(1500); 
+    if(movingDir == MovingDir_R && railSeg_Flag == RailSeg_R)  motor_chassis.pid.SetPoint = (movingDir)?(-1500):(1500); 
+    
+    if(is_Under_Attack || cur_escape_period < set_escape_period) Chassis_Patrol_PID_Cal();
+    else movingTick = 0,Chassis_SLEEP_PID_Cal();
+}
+
+
+/**
+  * @brief  遥控模式下底盘的运动(改成检录模式的底盘运动，运动很慢 只考虑光电开关和行程开关的 读取)
+  * @param  None
+  * @retval None
+  */
+static void Chassis_RC_Act(void)
+{
+    //static float kChassis = 4.0f;   //缩放系数
+    if(chassisFlag_Init == 0)
+    {
+        motor_chassis.pid.SetPoint=0;
+        chassisFlag_Init=1; 
+    }
+    
+    //根据运动状态，做计数器计数
+    if(PhotoEle_State == PhotoEle_Both_IDLE) 
+        waitingTick = 0,movingTick++;
+    else if((PhotoEle_State == PhotoEle_Left_Active)|| (LimitSw_State == Limit_Left_Active) )
+        //左侧触发（￣︶￣）↗　，运动暂停，movingTick清零，waitingTick++, 运动变向
+        waitingTick++,movingTick = 0,movingDir = MovingDir_R;
+    else if( (PhotoEle_State == PhotoEle_Right_Active) || (LimitSw_State == Limit_Right_Active ) )
+        //右侧触发（￣︶￣）↗　，运动暂停，movingTick清零，waitingTick++, 运动变向
+        waitingTick++,movingTick = 0,movingDir = MovingDir_L;
+    else if(PhotoEle_State == PhotoEle_Both_Active ) 
+        waitingTick = 1,movingTick = 0;//报错！！！！
+
+    
+    //根据计数值，改变运动状态
+    if(waitingTick>0 && waitingTick<100 && movingTick == 0) 
+        motor_chassis.pid.SetPoint = 0;//暂停状态0速
+    else if(waitingTick>100 && movingTick == 0)
+        motor_chassis.pid.SetPoint = (movingDir)?(-1500):(1500);        
+    
+    if(movingDir == MovingDir_L)  motor_chassis.pid.SetPoint = (movingDir)?(-1500):(1500); 
+    if(movingDir == MovingDir_R)  motor_chassis.pid.SetPoint = (movingDir)?(-1500):(1500); 
+    
+    /*if(is_Under_Attack || cur_escape_period < set_escape_period)*/ Chassis_RC_PID_Cal();
+    //else movingTick = 0,Chassis_SLEEP_PID_Cal();
+}
+
+
+
+inline static void Chassis_SLEEP_Act(void)
+{
+    Chassis_SLEEP_PID_Cal();
+}
+
+int16_t debug_SetPoint = 0;
+static void Chassis_DEBUG_Act(void)
+{   
+    motor_chassis.pid.SetPoint = debug_SetPoint;
+    Chassis_DEBUG_PID_Cal();
+}
+
+static void Chassis_RC_PID_Cal(void)
+{
+    float Chassis_Iset;
+    
+    //底盘3508 限幅+赋值
+    motor_chassis.pid.SetPoint = LIMIT_MAX_MIN(motor_chassis.pid.SetPoint,ChassisCurrentLimit , -ChassisCurrentLimit);
+    Chassis_Iset = PID_Calc( &motor_chassis.pid, motor_chassis.real_speed);
+//    PowerLimit_k += PID_Calc(&PowerLimit, PowerNow) / PowerLimit.SetPoint;
+//    PowerLimit_k = LIMIT_MAX_MIN(PowerLimit_k, 1, 0);
+    Chassis_Iset = LIMIT_MAX_MIN(Chassis_Iset, ChassisCurrentLimit, -ChassisCurrentLimit);
+//  Chassis_Iset = PowerLimit_k * Chassis_Iset;
+    
+    Chassis_CAN1Send(Chassis_Iset);
+}
+
+static void Chassis_Patrol_PID_Cal(void)
+{
+    //功率控制相关 计算当前的缩放系数
+    //TODO! 可以考虑把功率控制的部分封装成过程函数，方便替换测试和移植
+    PowerLimit_k = LIMIT_MAX_MIN(maxPower / PowerNow, 2.7f, 0.0f);  //用当前功率和实际功率算出的一个功率系数
+    if(remainEnergy <= 50) PowerLimit_k *=0.33f;  //这个0.4得多试试
+    else if(remainEnergy >=150 && PowerLimit_k > 1.0f) PowerLimit_k *= PowerLimit_k;    //根据剩余能量，给功率系数做进一步修饰
+    else if(remainEnergy <100 && remainEnergy >50 && PowerLimit_k >= 1.0f) PowerLimit_k = 1.05f; 
+    
+    //电流环PID相关
+    float Chassis_Iset;
+    Chassis_Iset = PID_Calc(&motor_chassis.pid, motor_chassis.real_speed);
+    Chassis_Iset = LIMIT_MAX_MIN(PowerLimit_k * Chassis_Iset, ChassisCurrentLimit, -ChassisCurrentLimit);
+    
+    Chassis_CAN1Send(Chassis_Iset);
+}
+
+inline static void Chassis_SLEEP_PID_Cal(void)
+{
+    Chassis_CAN1Send(0);
+}
+
+int32_t debug_Chassis_Iset;
+static void Chassis_DEBUG_PID_Cal(void)
+{
+    extern INA260 INA260_1;
+    debug_Chassis_Iset = (int16_t)PID_Calc(&motor_chassis.pid, motor_chassis.real_speed);
+    debug_Chassis_Iset = LIMIT_MAX_MIN(debug_Chassis_Iset, ChassisCurrentLimit, -ChassisCurrentLimit);
+    
+    Chassis_CAN1Send(debug_Chassis_Iset);
+}
+
+/**
+  * @brief  底盘PID初始化
+  * @param  None
+  * @retval None
+  */
+static void PID_Chassis_Init(void)
+{ 
+    motor_chassis.pid.P = 50.0f;//0.8f;
+	motor_chassis.pid.I = 0;//0.6f;
+	motor_chassis.pid.D = 0;//0.7f;
+	motor_chassis.pid.IMax = 10.0f;
+    motor_chassis.pid.OutMax = 5000.0f;
+	motor_chassis.zerocheck.CountCycle = 8191;
+	motor_chassis.zerocheck.LastValue = motor_chassis.angle_abs;
+	motor_chassis.zerocheck.Circle = 0;
+	
+    
+}
+
+void PID_Chassis_ClearError(void)
+{  //按理说是可以不用这个函数的，但目前加上一次清零以防万一
+    motor_chassis.pid.dError = 0.0f;
+    motor_chassis.pid.PreError = 0.0f;
+    motor_chassis.pid.SumError = 0.0f;     
+}
+
+
+
