@@ -68,9 +68,10 @@ void task_ShootUp(void *parameter)
     }
 }
 
+//这几个变量是每个shoot_Act共用的，以后也许可以改成一个结构体，然后各自的Act用各自的成员值
 uint32_t shootDelayTick;         //记录单连发模式下，每两发子弹之间的实时时间间隔
 float testInc = 29510.0f;        //26910.0f;//拨一颗弹丸需给到pos的增量值
-uint32_t delayTick_oneShot = /*1000;*/50; //走掉一颗弹丸间隔的时间(ms)
+uint32_t delayTick_oneShot = 50; //走掉一颗弹丸间隔的时间(ms)
 float bodanLastPos;              //存放上次单发结束时的拨弹电机位置值
 
 int16_t test_fric_speed0 = 0, test_fric_speed1 = 0;
@@ -109,8 +110,7 @@ static void aiming(void)
         ABS((PC_Receive.RCPitch - Pitch_Actual)) <= pitch_thresh &&
         ABS((PC_Receive.RCYaw - Yaw_Actual)) <= yaw_thresh)
         CV_Shoot_ABLE = 1;
-    else
-        CV_Shoot_ABLE = 0;
+    else CV_Shoot_ABLE = 0;
 }
 static void Shoot_PC_Act(void)
 {
@@ -129,7 +129,6 @@ static void Shoot_PC_Act(void)
         BodanMotor.pid_pos.SetPoint = bodanLastPos + testInc; //位置值设定为当前值增加一格弹丸的角度
 //        else
 //            BodanMotor.pid_pos.SetPoint = bodanLastPos - (testInc/10.0f);
-
         Shoot_PC_PID_Cal();
     }
     else

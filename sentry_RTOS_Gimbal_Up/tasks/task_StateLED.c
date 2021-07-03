@@ -16,4 +16,3 @@ void task_StateLED(void)
         vTaskDelay(500);
     }
 }
-

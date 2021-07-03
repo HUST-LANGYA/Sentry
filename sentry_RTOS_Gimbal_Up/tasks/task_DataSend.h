@@ -12,4 +12,3 @@ void Bodan_Can2Send(int16_t bodanVal);
 void Remote_Can1Send(void);
 
 #endif //__TASK_DATASEND_H
-

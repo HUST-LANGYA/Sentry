@@ -94,13 +94,3 @@ inline RC_Ctl_t getRCData(void)
 {
 	return RC_Ctl;
 }
-
-//! 这个函数到时候里面也要改成内核变量 然后套在带参宏函数里面
-
-
-
-
-
-
-
-

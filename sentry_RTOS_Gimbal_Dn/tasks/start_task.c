@@ -1,25 +1,8 @@
-/*
-  ****************************(C) COPYRIGHT 2016 DJI****************************
-  * @file       start_task.c/h
-  * @brief      启动任务，将一个个任务开启，分配资源，给定任务优先级,
-  * @note       
-  * @history
-  *  Version    Date            Author          Modification
-  *  V1.0.0     Dec-26-2018     RM              1. 完成
-  *
-  @verbatim
-  ==============================================================================
-
-  ==============================================================================
-  @endverbatim
-  ****************************(C) COPYRIGHT 2016 DJI****************************
-  */
-
-#include "Start_Task.h"
-
 #include "FreeRTOSConfig.h"
 #include "FreeRTOS.h"
 #include "task.h"
+
+#include "Start_Task.h"
 
 #define task_ActionUpdate_PRIO 30
 #define task_ActionUpdate_SIZE 256
@@ -149,13 +132,6 @@ static void start_task(void *pvParameters)
 
 void start_the_very_first_task(void)
 {
-    //各项状态初始化 （原system_Init()）
-    reset_remote_control_msg();
-
-    //Sentry_Status.GimbalMode=Gimbal_Up_PC;
-    //Sentry_Status.ShootMode=Shoot_Up_PC;
-
-
     //开启引导任务
     xTaskCreate((TaskFunction_t)start_task,          //任务函数
                 (const char *)"start_task",          //任务名称

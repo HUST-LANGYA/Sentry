@@ -4,7 +4,6 @@ static void hardware_init(void);
 
 int main(void)
 {
-
     NVIC_PriorityGroupConfig(NVIC_PriorityGroup_4);//即四位全部用于抢占优先级
     //（注意：一旦初始化好 NVIC 的优先级分组后，切不可以在应用中再次更改。）
     //在 NVIC 分组为 4 的情况下，抢占优先级可配置范围是 0-15，
@@ -14,9 +13,7 @@ int main(void)
     delay_ms(100); 
     start_the_very_first_task();   //这个函数来开启引导任务
     vTaskStartScheduler();   //开启任务调度器（后面vans了就）
-    while (1)     
-    {
-    }
+    while (1) {;}
 }
 
 static void hardware_init(void)
@@ -34,6 +31,5 @@ static void hardware_init(void)
 //    UART4_Configuration();  //发送cpu运行状态
 //    delay_ms(100);
     CAN_Configuration();
-
     //IWDG_Config(IWDG_Prescaler_128,3125);
 }

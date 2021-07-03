@@ -3,7 +3,6 @@
 
 extern CanRxMsg Can1_rx_message_0, Can1_rx_message_1, Can2_rx_message_0, Can2_rx_message_1;
 
-
 /**
  * @brief  ¥˝¿©’πFIFO
  * @param  None
@@ -73,12 +72,10 @@ float gyro_pitch_test;
 
 uint32_t cnt_temp, cnt1; //float cnt2,cnt2temp;
 float gz10e6;            //?????
-uint16_t disconnect_Gyro = 0;
 void CAN2_DataReceive_1(void) //Ω” ’Õ”¬›“«
 {
     if (Can2_rx_message_1.StdId == Gyro_Pitch_ID)
     {
-        disconnect_Gyro++;
         memcpy(&Gyro_White.PITCH, &Can2_rx_message_1.Data[0], 4);
         memcpy(&Gyro_White.GY, &Can2_rx_message_1.Data[4], 4);
         gyro_cnt++;
@@ -154,4 +151,3 @@ void PCReceive(uint8_t PCReceivebuffer[])
     PC_Receive.DisConnect = 0;
     tx2_last_receive_flag = tx2_receive_flag;
 }
-

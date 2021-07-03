@@ -515,11 +515,6 @@
               <FilePath>..\tasks\task_ActionUpdate.c</FilePath>
             </File>
             <File>
-              <FileName>task_BlockDisconnect.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\tasks\task_BlockDisconnect.c</FilePath>
-            </File>
-            <File>
               <FileName>task_DataSend.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\tasks\task_DataSend.c</FilePath>
@@ -558,6 +553,62 @@
               <FileName>task_CV_DataSend.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\tasks\task_CV_DataSend.c</FilePath>
+            </File>
+            <File>
+              <FileName>task_BlockDisconnect.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\tasks\task_BlockDisconnect.c</FilePath>
+              <FileOption>
+                <CommonProperty>
+                  <UseCPPCompiler>2</UseCPPCompiler>
+                  <RVCTCodeConst>0</RVCTCodeConst>
+                  <RVCTZI>0</RVCTZI>
+                  <RVCTOtherData>0</RVCTOtherData>
+                  <ModuleSelection>0</ModuleSelection>
+                  <IncludeInBuild>0</IncludeInBuild>
+                  <AlwaysBuild>0</AlwaysBuild>
+                  <GenerateAssemblyFile>2</GenerateAssemblyFile>
+                  <AssembleAssemblyFile>2</AssembleAssemblyFile>
+                  <PublicsOnly>2</PublicsOnly>
+                  <StopOnExitCode>11</StopOnExitCode>
+                  <CustomArgument></CustomArgument>
+                  <IncludeLibraryModules></IncludeLibraryModules>
+                  <ComprImg>1</ComprImg>
+                </CommonProperty>
+                <FileArmAds>
+                  <Cads>
+                    <interw>2</interw>
+                    <Optim>0</Optim>
+                    <oTime>2</oTime>
+                    <SplitLS>2</SplitLS>
+                    <OneElfS>2</OneElfS>
+                    <Strict>2</Strict>
+                    <EnumInt>2</EnumInt>
+                    <PlainCh>2</PlainCh>
+                    <Ropi>2</Ropi>
+                    <Rwpi>2</Rwpi>
+                    <wLevel>0</wLevel>
+                    <uThumb>2</uThumb>
+                    <uSurpInc>2</uSurpInc>
+                    <uC99>2</uC99>
+                    <uGnu>2</uGnu>
+                    <useXO>2</useXO>
+                    <v6Lang>0</v6Lang>
+                    <v6LangP>0</v6LangP>
+                    <vShortEn>2</vShortEn>
+                    <vShortWch>2</vShortWch>
+                    <v6Lto>2</v6Lto>
+                    <v6WtE>2</v6WtE>
+                    <v6Rtti>2</v6Rtti>
+                    <VariousControls>
+                      <MiscControls></MiscControls>
+                      <Define></Define>
+                      <Undefine></Undefine>
+                      <IncludePath></IncludePath>
+                    </VariousControls>
+                  </Cads>
+                </FileArmAds>
+              </FileOption>
             </File>
           </Files>
         </Group>
@@ -615,6 +666,11 @@
               <FilePath>..\hardware\HW_CAN.c</FilePath>
             </File>
             <File>
+              <FileName>HW_GPIO_LED.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hardware\HW_GPIO_LED.c</FilePath>
+            </File>
+            <File>
               <FileName>HW_DBUS.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\hardware\HW_DBUS.c</FilePath>
@@ -625,29 +681,9 @@
               <FilePath>..\hardware\HW_FrictionWheel.c</FilePath>
             </File>
             <File>
-              <FileName>HW_GPIO_LED.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\hardware\HW_GPIO_LED.c</FilePath>
-            </File>
-            <File>
               <FileName>HW_USART2_PC.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\hardware\HW_USART2_PC.c</FilePath>
-            </File>
-            <File>
-              <FileName>HW_IWDG.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\hardware\HW_IWDG.c</FilePath>
-            </File>
-            <File>
-              <FileName>HW_TIM2_delay.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\hardware\HW_TIM2_delay.c</FilePath>
-            </File>
-            <File>
-              <FileName>HW_TIM8_pwm.c</FileName>
-              <FileType>1</FileType>
-              <FilePath>..\hardware\HW_TIM8_pwm.c</FilePath>
             </File>
             <File>
               <FileName>HW_USART3_RC.c</FileName>
@@ -655,14 +691,29 @@
               <FilePath>..\hardware\HW_USART3_RC.c</FilePath>
             </File>
             <File>
-              <FileName>HW_TIM5_runtimeCPU.c</FileName>
+              <FileName>HW_IWDG.c</FileName>
               <FileType>1</FileType>
-              <FilePath>..\hardware\HW_TIM5_runtimeCPU.c</FilePath>
+              <FilePath>..\hardware\HW_IWDG.c</FilePath>
+            </File>
+            <File>
+              <FileName>HW_TIM8_pwm.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hardware\HW_TIM8_pwm.c</FilePath>
+            </File>
+            <File>
+              <FileName>HW_TIM2_delay.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hardware\HW_TIM2_delay.c</FilePath>
             </File>
             <File>
               <FileName>HW_UART4_debugPC.c</FileName>
               <FileType>1</FileType>
               <FilePath>..\hardware\HW_UART4_debugPC.c</FilePath>
+            </File>
+            <File>
+              <FileName>HW_TIM5_runtimeCPU.c</FileName>
+              <FileType>1</FileType>
+              <FilePath>..\hardware\HW_TIM5_runtimeCPU.c</FilePath>
             </File>
           </Files>
         </Group>

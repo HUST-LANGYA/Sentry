@@ -1,4 +1,5 @@
 #include "main.h"
+#include "HW_USART2_PC.h"
 
 uint8_t PCbuffer[PC_RECVBUF_SIZE] = {0, 0, 0};
 uint8_t PC_SendBuf[PC_SENDBUF_SIZE];
@@ -12,8 +13,8 @@ extern uint8_t SendToPC_Buff[PC_SENDBUF_SIZE];
 void USART2_Configuration(void)
 {
     USART_InitTypeDef usartInit;
-    GPIO_InitTypeDef gpioInit;
-    NVIC_InitTypeDef nvicInit;
+    GPIO_InitTypeDef  gpioInit;
+    NVIC_InitTypeDef  nvicInit;
 
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOA, ENABLE);
     RCC_APB1PeriphClockCmd(RCC_APB1Periph_USART2, ENABLE);
@@ -51,7 +52,7 @@ void USART2_Configuration(void)
     USART_Init(USART2, &usartInit);
 
     USART_ITConfig(USART2, USART_IT_IDLE, ENABLE);
-   // USART_ITConfig(USART2,USART_IT_RXNE,ENABLE);
+   
     USART_Cmd(USART2, ENABLE);
     USART_DMACmd(USART2, USART_DMAReq_Rx, ENABLE);
     USART_DMACmd(USART2, USART_DMAReq_Tx, ENABLE);
@@ -62,8 +63,6 @@ void USART2_Configuration(void)
     nvicInit.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvicInit);
 
-
-//DMA的通道和上摩擦轮的TIM4_UP冲了
     {
         DMA_InitTypeDef dmaInit;
         RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1, ENABLE);
@@ -85,7 +84,7 @@ void USART2_Configuration(void)
         dmaInit.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
 
         nvicInit.NVIC_IRQChannel = DMA1_Stream5_IRQn;
-        nvicInit.NVIC_IRQChannelPreemptionPriority = 1; //1
+        nvicInit.NVIC_IRQChannelPreemptionPriority = 1;
         nvicInit.NVIC_IRQChannelSubPriority = 3;
         nvicInit.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&nvicInit);
@@ -101,7 +100,7 @@ void USART2_Configuration(void)
         DMA_DeInit(DMA1_Stream6);
         dmaInit.DMA_Channel = DMA_Channel_4;
         dmaInit.DMA_PeripheralBaseAddr = (uint32_t) & (USART2->DR);
-        dmaInit.DMA_Memory0BaseAddr = (uint32_t)SendToPC_Buff;//PC_SendBuf;
+        dmaInit.DMA_Memory0BaseAddr = (uint32_t)SendToPC_Buff;
         dmaInit.DMA_DIR = DMA_DIR_MemoryToPeripheral;
         dmaInit.DMA_BufferSize = PC_SENDBUF_SIZE;
         dmaInit.DMA_PeripheralInc = DMA_PeripheralInc_Disable;
@@ -116,7 +115,7 @@ void USART2_Configuration(void)
         dmaInit.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
 
         nvicInit.NVIC_IRQChannel = DMA1_Stream6_IRQn;
-        nvicInit.NVIC_IRQChannelPreemptionPriority = 1; //1
+        nvicInit.NVIC_IRQChannelPreemptionPriority = 1;
         nvicInit.NVIC_IRQChannelSubPriority = 1;
         nvicInit.NVIC_IRQChannelCmd = ENABLE;
         NVIC_Init(&nvicInit);
@@ -132,7 +131,6 @@ void USART2_Configuration(void)
   * @param  None
   * @retval None
   */
-//uint8_t ucTemp[8];
 void USART2_IRQHandler(void)
 {
     if (USART_GetITStatus(USART2, USART_IT_IDLE) != RESET)
@@ -140,17 +138,6 @@ void USART2_IRQHandler(void)
         (void)USART2->SR; //clear the IDLE int
         (void)USART2->DR;
     }
-    
-    
-   
-//	if(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET)
-//	{	for(int i=0;i<8;i++)
-//        {        
-//            ucTemp[i] = USART_ReceiveData(USART2);
-//            while(USART_GetITStatus(USART2,USART_IT_RXNE)!=RESET);
-//        }
-//        PCReceive(ucTemp);  
-//	}	
 }
 
 
@@ -159,8 +146,6 @@ int16_t Crcpass, crcNopass;
 PC_Recv_t PC_Recv_D;
 uint8_t ErrorBuff[PC_RECVBUF_SIZE * 4];
 int16_t buffindex;
-
-
 /**
   * @brief  串口2 DMA接收中断
   * @param  None
@@ -172,6 +157,7 @@ void DMA1_Stream5_IRQHandler(void)
     int16_t PackPoint, n;
     if (DMA_GetITStatus(DMA1_Stream5, DMA_IT_TCIF5))
     {
+        DMA_Cmd(DMA1_Stream5,DISABLE);
         memcpy(temptemp + PC_RECVBUF_SIZE, PCbuffer, PC_RECVBUF_SIZE);
         for (PackPoint = 0; PackPoint < PC_RECVBUF_SIZE; PackPoint++) //防止错位，不一定数组元素的第一个就为
         {
@@ -183,12 +169,7 @@ void DMA1_Stream5_IRQHandler(void)
                 }
                 crcNopass++;
                 if (Verify_CRC8_Check_Sum(tempPC, PC_RECVBUF_SIZE))
-                { //  extern uint32_t tick2,tick1;
-                  //  tick2=xTaskGetTickCountFromISR()-tick1;
                     PCReceive(tempPC);
-                    //extern uint32_t tick1;
-                  //  tick1=xTaskGetTickCountFromISR();
-                }
                 else
                 {
                     buffindex++;
@@ -197,10 +178,10 @@ void DMA1_Stream5_IRQHandler(void)
                 break;
             }
         }
-        //DMA_Cmd(DMA1_Stream5,DISABLE);
         DMA_ClearFlag(DMA1_Stream5, DMA_FLAG_TCIF5);
         DMA_ClearITPendingBit(DMA1_Stream5, DMA_IT_TCIF5);
         memcpy(temptemp, temptemp + PC_RECVBUF_SIZE, PC_RECVBUF_SIZE);
+        DMA_Cmd(DMA1_Stream5,DISABLE);
     }
 }
 

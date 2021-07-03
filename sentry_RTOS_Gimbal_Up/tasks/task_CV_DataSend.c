@@ -4,7 +4,6 @@
 uint8_t SendToPC_Buff[PC_SENDBUF_SIZE];
 extern int16_t PC_Sendflag;
 
-static void Tx2_Off_CheckAndSet(u8 *Buff);
 static void USART2_SendtoPC(void);
 
 /**
@@ -19,9 +18,7 @@ void task_CV_DataSend(void *pvParameters)
     while (1)
     {
         USART2_SendtoPC();
-
         vTaskDelay(1);
-
 #if INCLUDE_uxTaskGetStackHighWaterMark
         TX2_high_water = uxTaskGetStackHighWaterMark(NULL);
 #endif
@@ -58,8 +55,6 @@ static void USART2_SendtoPC(void)
         SendToPC_Buff[5] = (unsigned char)((yaw >> 16) & 0x000000FF);
         SendToPC_Buff[6] = (unsigned char)((yaw >> 8) & 0x000000FF);
         SendToPC_Buff[7] = (unsigned char)((yaw >> 0) & 0x000000FF);
-
-        Tx2_Off_CheckAndSet(SendToPC_Buff);
 
         SendToPC_Buff[9] = '#';
         Append_CRC8_Check_Sum(SendToPC_Buff, 10);

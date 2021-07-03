@@ -13,7 +13,6 @@ typedef struct
 	float PreError;         //ºÏ≤‚¡ø≈–∂œ≤Ó÷µ
 }ZeroCheck_Typedef;
 
-float ZeroCheck(ZeroCheck_Typedef *Zero,float value,int16_t Zerocheck_mode);
 void task_ZeroCheck(void);
 
 float PitchAngleOutPut(void);

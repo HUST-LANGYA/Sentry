@@ -1,8 +1,6 @@
 #ifndef __TASK_ACTIONUPDATE_H
 #define __TASK_ACTIONUPDATE_H
 
-
-//* 如果有机会 看看能不能把这个状态结构体 做成一个长的信号量
 typedef struct
 {
 	uint8_t Chassis_Mode;
@@ -11,8 +9,6 @@ typedef struct
     uint8_t Shoot_Dn_Mode;
 	uint8_t Gimbal_Dn_Mode;
 } State_t;
-
-
 
 //射击模式
 #define Shoot_Up_RC 0x01
@@ -40,13 +36,5 @@ typedef struct
 #define Shoot_Dn_DEBUG 0x0C
 
 void task_ActionUpdate(void);
-
-
-static void update_state_with_RCdata(void);
-static void sentry_state_reflect(uint8_t gimbal_up_mode,
-                                 uint8_t gimbal_dn_mode,
-                                 uint8_t shoot_up_mode,
-                                 uint8_t shoot_dn_mode,
-                                 uint8_t chassis_mode);  //reflect当作做一个映射的意思吧
 
 #endif //__TASK_ACTIONUPDATE_H

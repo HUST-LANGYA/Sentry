@@ -63,25 +63,25 @@ static void CAN1_Configuration(void)
   canInit.CAN_Prescaler = 3; //CAN BaudRate 42/(1+9+4)/3=1Mbps
   CAN_Init(CAN1, &canInit);
 
-  canFilterInit.CAN_FilterNumber = 0;                      //选择过滤器1
-  canFilterInit.CAN_FilterMode = CAN_FilterMode_IdList;    // 标识符屏蔽位模式
-  canFilterInit.CAN_FilterScale = CAN_FilterScale_16bit;   // 32位过滤器
-  canFilterInit.CAN_FilterIdHigh = Remote_Control_ID << 5; // 过滤器标识符
+  canFilterInit.CAN_FilterNumber = 0;
+  canFilterInit.CAN_FilterMode = CAN_FilterMode_IdList;
+  canFilterInit.CAN_FilterScale = CAN_FilterScale_16bit;
+  canFilterInit.CAN_FilterIdHigh = Remote_Control_ID << 5;
   canFilterInit.CAN_FilterIdLow = 0x201 << 5;
   canFilterInit.CAN_FilterMaskIdHigh = 0x202 << 5;
   canFilterInit.CAN_FilterMaskIdLow = 0x204 << 5;
-  canFilterInit.CAN_FilterFIFOAssignment = CAN_FIFO0; // FIFO0指向过滤器
+  canFilterInit.CAN_FilterFIFOAssignment = CAN_FIFO0;
   canFilterInit.CAN_FilterActivation = ENABLE;
   CAN_FilterInit(&canFilterInit);
 
-  canFilterInit.CAN_FilterNumber = 1;                   //选择过滤器1
-  canFilterInit.CAN_FilterMode = CAN_FilterMode_IdList; //列表模式
+  canFilterInit.CAN_FilterNumber = 1;
+  canFilterInit.CAN_FilterMode = CAN_FilterMode_IdList;
   canFilterInit.CAN_FilterScale = CAN_FilterScale_16bit;
   canFilterInit.CAN_FilterIdHigh = SHOOTING_HEAT_ID << 5;
   canFilterInit.CAN_FilterIdLow = 0x202 << 5;
   canFilterInit.CAN_FilterMaskIdHigh = 0x203 << 5;
   canFilterInit.CAN_FilterMaskIdLow = 0x204 << 5;
-  canFilterInit.CAN_FilterFIFOAssignment = CAN_FIFO1; //fifo
+  canFilterInit.CAN_FilterFIFOAssignment = CAN_FIFO1;
   canFilterInit.CAN_FilterActivation = ENABLE;
   CAN_FilterInit(&canFilterInit);
 
@@ -98,9 +98,7 @@ static void CAN1_Configuration(void)
 void CAN1_TX_IRQHandler(void)
 {
   if (CAN_GetITStatus(CAN1, CAN_IT_TME) != RESET)
-  {
     CAN_ClearITPendingBit(CAN1, CAN_IT_TME);
-  }
 }
 /**
   * @brief  CAN1接收中断0
@@ -182,7 +180,7 @@ static void CAN2_Configuration(void)
   canInit.CAN_TTCM = DISABLE;
   canInit.CAN_ABOM = ENABLE;
   canInit.CAN_AWUM = ENABLE;
-  canInit.CAN_NART = ENABLE; //关闭失败自动重传
+  canInit.CAN_NART = ENABLE;
   canInit.CAN_RFLM = DISABLE;
   canInit.CAN_TXFP = ENABLE;
   canInit.CAN_Mode = CAN_Mode_Normal;
@@ -192,31 +190,29 @@ static void CAN2_Configuration(void)
   canInit.CAN_Prescaler = 3; //CAN BaudRate 42/(1+9+4)/3=1Mbps
   CAN_Init(CAN2, &canInit);
 
-  //FIFO0，列表模式，只接收0x201 0x202 0x205 0x206
-  canFilterInit.CAN_FilterNumber = 15; //选择过滤器15
+
+  canFilterInit.CAN_FilterNumber = 15; 
   canFilterInit.CAN_FilterMode = CAN_FilterMode_IdList;
   canFilterInit.CAN_FilterScale = CAN_FilterScale_16bit;
   canFilterInit.CAN_FilterIdHigh = 0x203 << 5;
   canFilterInit.CAN_FilterIdLow = 0x204 << 5;
   canFilterInit.CAN_FilterMaskIdHigh = 0x205 << 5;
   canFilterInit.CAN_FilterMaskIdLow = 0x206 << 5;
-  canFilterInit.CAN_FilterFIFOAssignment = 0; //fifo0
+  canFilterInit.CAN_FilterFIFOAssignment = 0;
   canFilterInit.CAN_FilterActivation = ENABLE;
   CAN_FilterInit(&canFilterInit);
 
   //FIFO1，只接收gyro_id
-  canFilterInit.CAN_FilterNumber = 16;                  //选择过滤器16
-  canFilterInit.CAN_FilterMode = CAN_FilterMode_IdList; //列表模式
+  canFilterInit.CAN_FilterNumber = 16;
+  canFilterInit.CAN_FilterMode = CAN_FilterMode_IdList;
   canFilterInit.CAN_FilterScale = CAN_FilterScale_32bit;
   canFilterInit.CAN_FilterIdHigh = 0x100 << 5;
   canFilterInit.CAN_FilterIdLow = 0 | CAN_ID_STD;
   canFilterInit.CAN_FilterMaskIdHigh = 0x101 << 5;
   canFilterInit.CAN_FilterMaskIdLow = 0 | CAN_ID_STD;
-  canFilterInit.CAN_FilterFIFOAssignment = 1; //fifo1
+  canFilterInit.CAN_FilterFIFOAssignment = 1;
   canFilterInit.CAN_FilterActivation = ENABLE;
   CAN_FilterInit(&canFilterInit);
-
-  delay_ms(100);
 
   CAN_ITConfig(CAN2, CAN_IT_FMP0, ENABLE);
   CAN_ITConfig(CAN2, CAN_IT_FMP1, ENABLE);
@@ -231,9 +227,7 @@ static void CAN2_Configuration(void)
 void CAN2_TX_IRQHandler(void)
 {
   if (CAN_GetITStatus(CAN2, CAN_IT_TME) != RESET)
-  {
-    CAN_ClearITPendingBit(CAN2, CAN_IT_TME);
-  }
+      CAN_ClearITPendingBit(CAN2, CAN_IT_TME);
 }
 /**
   * @brief  CAN2接收中断
@@ -242,12 +236,12 @@ void CAN2_TX_IRQHandler(void)
   */
 void CAN2_RX0_IRQHandler(void)
 {
-  if (CAN_GetITStatus(CAN2, CAN_IT_FMP0) != RESET)
-  {
-    CAN_ClearITPendingBit(CAN2, CAN_IT_FMP0);
-    CAN_Receive(CAN2, CAN_FIFO0, &Can2_rx_message_0);
-    CAN2_DataReceive_0();
-  }
+    if (CAN_GetITStatus(CAN2, CAN_IT_FMP0) != RESET)
+    {
+        CAN_ClearITPendingBit(CAN2, CAN_IT_FMP0);
+        CAN_Receive(CAN2, CAN_FIFO0, &Can2_rx_message_0);
+        CAN2_DataReceive_0();
+    }
 }
 
 /**
@@ -257,12 +251,12 @@ void CAN2_RX0_IRQHandler(void)
   */
 void CAN2_RX1_IRQHandler(void)
 {
-  if (CAN_GetITStatus(CAN2, CAN_IT_FMP1) != RESET)
-  {
-    CAN_ClearITPendingBit(CAN2, CAN_IT_FMP1);
-    CAN_Receive(CAN2, CAN_FIFO1, &Can2_rx_message_1);
-    CAN2_DataReceive_1();
-  }
+    if (CAN_GetITStatus(CAN2, CAN_IT_FMP1) != RESET)
+    {
+        CAN_ClearITPendingBit(CAN2, CAN_IT_FMP1);
+        CAN_Receive(CAN2, CAN_FIFO1, &Can2_rx_message_1);
+        CAN2_DataReceive_1();
+    }
 }
 
 /**
@@ -272,7 +266,6 @@ void CAN2_RX1_IRQHandler(void)
   */
 void CAN_Configuration(void)
 {
-  CAN1_Configuration();
-  delay_ms(100);
-  CAN2_Configuration();
+    CAN1_Configuration();
+    CAN2_Configuration();
 }

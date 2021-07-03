@@ -29,11 +29,8 @@ void FrictionWheel_SetSpeed(int16_t tmpAccelerator0, int16_t tmpAccelerator1)
 //  accelerator1 = LIMIT_MAX_MIN(tmpAccelerator1, 900, 400);
     accelerator0 = LIMIT_MAX_MIN(tmpAccelerator0, 15050, 0);
     accelerator1 = LIMIT_MAX_MIN(tmpAccelerator1, 15050, 0);
-  //这里放成变量是方便调试时观察
-  //赋值
-  // TIM_SetCompare1(TIM8,accelerator0);
-  // TIM_SetCompare2(TIM8,accelerator1);
 
+  //赋值
   //2006的话，就算PID把电流值用CAN发过去
   extern _2006_motor_t FrictionMotor[2];
   FrictionMotor[0].pid_speed.SetPoint = accelerator0;

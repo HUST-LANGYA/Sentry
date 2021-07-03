@@ -109,9 +109,9 @@ void CAN1_RX0_IRQHandler(void)
 {
     if (CAN_GetITStatus(CAN1,CAN_IT_FMP0)!= RESET)
 	{
-        CAN_ClearITPendingBit(CAN1, CAN_IT_FMP0);
         CAN_Receive(CAN1, CAN_FIFO0, &Can1_rx_message_0);
         //CAN1_DataReceive_0();
+        CAN_ClearITPendingBit(CAN1, CAN_IT_FMP0);
     }
 }
 
@@ -125,9 +125,9 @@ void CAN1_RX1_IRQHandler(void)
 {
     if (CAN_GetITStatus(CAN1,CAN_IT_FMP1)!= RESET)
     {
-		CAN_ClearITPendingBit(CAN1, CAN_IT_FMP1);
         CAN_Receive(CAN1, CAN_FIFO1, &Can1_rx_message_1);
 		CAN1_DataReceive_1();
+        CAN_ClearITPendingBit(CAN1, CAN_IT_FMP1);
     }
 }
 
@@ -195,7 +195,7 @@ static void CAN2_Configuration(void)
 	canInit.CAN_Prescaler = 3; //CAN BaudRate 42/(1+9+4)/3=1Mbps
 	CAN_Init(CAN2, &canInit);
 		
-	//FIFO0，列表模式，只接收0x201 0x202 0x205 0x206
+
 	can_filter.CAN_FilterNumber = 15;
 	can_filter.CAN_FilterMode = CAN_FilterMode_IdList;
 	can_filter.CAN_FilterScale = CAN_FilterScale_16bit;
@@ -203,7 +203,7 @@ static void CAN2_Configuration(void)
 	can_filter.CAN_FilterIdLow = 0x204 << 5 ;
 	can_filter.CAN_FilterMaskIdHigh = 0x205 << 5 ;
 	can_filter.CAN_FilterMaskIdLow = 0x206 << 5;
-	can_filter.CAN_FilterFIFOAssignment = 0;//fifo0
+	can_filter.CAN_FilterFIFOAssignment = 0;
 	can_filter.CAN_FilterActivation = ENABLE;
 	CAN_FilterInit(&can_filter);
 
@@ -215,14 +215,13 @@ static void CAN2_Configuration(void)
 	can_filter.CAN_FilterIdLow = 0 | CAN_ID_STD;
 	can_filter.CAN_FilterMaskIdHigh = 0x101 << 5;
 	can_filter.CAN_FilterMaskIdLow = 0 | CAN_ID_STD;
-	can_filter.CAN_FilterFIFOAssignment = 1;//fifo1
+	can_filter.CAN_FilterFIFOAssignment = 1;
 	can_filter.CAN_FilterActivation = ENABLE;
 	CAN_FilterInit(&can_filter);
 
 	CAN_ITConfig(CAN2,CAN_IT_FMP0,ENABLE);
 	CAN_ITConfig(CAN2,CAN_IT_FMP1,ENABLE);		
 	CAN_ITConfig(CAN2,CAN_IT_TME,ENABLE);
-	
 }
 
 /**

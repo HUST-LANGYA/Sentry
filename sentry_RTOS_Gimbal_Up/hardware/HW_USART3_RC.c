@@ -42,12 +42,6 @@ void USART3_Configuration(void)
     nvicInit.NVIC_IRQChannelSubPriority = 0;
     nvicInit.NVIC_IRQChannelCmd = ENABLE;
     NVIC_Init(&nvicInit);
-    
-//    nvicInit.NVIC_IRQChannel = DMA1_Stream1_IRQn;
-//    nvicInit.NVIC_IRQChannelPreemptionPriority = 1;
-//    nvicInit.NVIC_IRQChannelSubPriority = 0;
-//    nvicInit.NVIC_IRQChannelCmd = ENABLE;
-//    NVIC_Init(&nvicInit);
 
     {
         DMA_InitTypeDef dmaInit;
@@ -69,17 +63,12 @@ void USART3_Configuration(void)
         dmaInit.DMA_FIFOThreshold = DMA_FIFOThreshold_1QuarterFull;
         dmaInit.DMA_MemoryBurst =  DMA_MemoryBurst_Single;//DMA_Mode_Normal;
         dmaInit.DMA_PeripheralBurst = DMA_PeripheralBurst_Single;
-//		DMA_Init(DMA1_Stream1, &dmaInit);
-//		DMA_ITConfig(DMA1_Stream1, DMA_IT_TC, ENABLE);
-//		DMA_Cmd(DMA1_Stream1, ENABLE);
-        //尝试双缓冲模式
+        //双缓冲模式
         DMA_DoubleBufferModeConfig(DMA1_Stream1,(uint32_t)&sbus_rx_buffer[1][0], DMA_Memory_0);   //first used memory configuration         
         DMA_DoubleBufferModeCmd(DMA1_Stream1, ENABLE);         
         DMA_Init(DMA1_Stream1,&dmaInit); 
         USART_ITConfig(USART3, USART_IT_IDLE, ENABLE);
-        //DMA_ITConfig(DMA1_Stream1, DMA_IT_TC, ENABLE);
         DMA_Cmd(DMA1_Stream1,ENABLE);
-        
     }
 }
 /**
@@ -93,27 +82,14 @@ void USART3_IRQHandler(void)
     {
         USART_ClearITPendingBit(USART3,USART_IT_IDLE);//清空中断标志位
         (void)USART3->DR; //清空数据寄存器，等待下一次接收
-
-
-        if(DMA_GetCurrDataCounter(DMA1_Stream1) == RX_USART3_BUFFER)     //ensure received complete frame data. 
-        {
+        
+        if(DMA_GetCurrDataCounter(DMA1_Stream1) == RX_USART3_BUFFER)
             RemoteReceive(DMA_GetCurrentMemoryTarget(DMA1_Stream1)?sbus_rx_buffer[0]:sbus_rx_buffer[1]);
-        }
         else 
         {//这个地方是可能收到了残缺帧，故从下一帧开始重新收完整帧
             DMA_Cmd(DMA1_Stream1,DISABLE);
             DMA_SetCurrDataCounter(DMA1_Stream1,RX_USART3_BUFFER);  
             DMA_Cmd(DMA1_Stream1,ENABLE);
-        }
-        
-/***
-另一种实现方式（可能会慢一些，因为需要手动开关DMA）：
-上面初始化时DMA_Mode 配置成Normal，在空闲中断里面处理数据（此时NDTR的值应该是0，即一次传输完成），
-进中断关DMA    DMA_Cmd(DMA1_Stream1, DISABLE);
-处理数据   if(DMA_GetCurrDataCounter(DMA1_Stream1)==0) RemoteReceive(DMA_GetCurrentMemoryTarget(DMA1_Stream1)?sbus_rx_buffer[1]:sbus_rx_buffer[0]);
-在这里把NDTR重置到18（RX_USART3_BUFFER）  DMA_SetCurrDataCounter(DMA1_Stream1, RX_USART3_BUFFER);  //重新装填待传输的字节数（不过我感觉 循环模式下，不手动装填应该也行吧？）
-重开DMA  DMA_Cmd(DMA1_Stream1, ENABLE);
-***/
-        
+        }        
     }
 }

@@ -1,11 +1,6 @@
 #include "main.h"
 #include "task_GimbalDn.h"
 
-//受陀螺仪的安装方式的影响，pitch轴水平角度可能会有180或0的偏置值
-//设置一个宏，在写setpoint等时候需加上该偏置值
-#define PITCH_GYRO_OFFSET 0
-#define YAW_GYRO_OFFSET 0 //可能也有有用处，比如上电时陀螺仪yaw轴的0值对应的不是正中间
-
 gimbal_motor_t MotoPitch, MotoYaw;
 float RCPitch_Scal = 0.000025f, RCYaw_Scal = 0.00002f; //遥控器对两轴控制的放大比率
 
@@ -23,6 +18,22 @@ extern State_t Sentry_State;
 uint8_t GimbalDn_ModeUpdate_Flag = 0;                 //标志上次模式和当前模式是否一致
 volatile uint8_t GimbalDn_LastMode = Gimbal_Dn_SLEEP; //存放上次进入Gimbal_Dn_task时的状态
 
+//******************内部函数声明***********************************************//
+static float CombPitchOutput(void); //获取滤波后的pitch角度的函数
+static float CombYawOutput(void);   //获取滤波后的yaw角度的函数
+static void Gimbal_Limit(void);//云台角度限幅函数
+static void PID_Gimbal_Init(void);
+static void Gimbal_GYRO_Cal(void);
+
+static void Gimbal_RC_Act(void);
+static void Gimbal_PC_Act(void);
+static void Gimbal_SLEEP_Act(void);
+static void Gimbal_DEBUG_Act(void);
+
+static void Gimbal_RC_PID_Cal(void);
+static void Gimbal_PC_PID_Cal(void);
+inline static void Gimbal_SLEEP_PID_Cal(void);
+
 /**
  * @brief 云台任务主体
  * @param 无
@@ -33,7 +44,6 @@ void task_GimbalDn(void *parameter)
     //进入任务时执行一次复位
     PID_Gimbal_Init(); //第一次执行云台任务是 给云台的PID参数进行初始化
     Gimbal_Limit();    //限幅校正
-    //加一个读取上电时两轴电机刻度的函数，即Gimbal_GYRO_Cal();里面只执行一次的那一块
     while (1)
     {
         GimbalDn_ModeUpdate_Flag = (GimbalDn_LastMode != Sentry_State.Gimbal_Dn_Mode); //?  0: 1;
@@ -45,56 +55,48 @@ void task_GimbalDn(void *parameter)
         Yaw_Actual = CombYawOutput();
         Pitch_Actual = CombPitchOutput();
 
-        if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_SLEEP)
-            Gimbal_SLEEP_Act();
-        else if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_PC)
-            Gimbal_PC_Act();
-        else if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_RC)
-            Gimbal_RC_Act();
-//        else if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_DEBUG)
-//            Gimbal_DEBUG_Act();
-        //后面可以继续扩展其他工作模式，然后要记得在头文件里面把对应的宏定义加上
-
+        if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_SLEEP)   Gimbal_SLEEP_Act();
+        else if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_PC) Gimbal_PC_Act();
+        else if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_RC) Gimbal_RC_Act();
+        else if (Sentry_State.Gimbal_Dn_Mode == Gimbal_Dn_DEBUG) Gimbal_DEBUG_Act();
         vTaskDelay(1);
     }
 }
 
 float Test_Pitch_Pos = 0, Test_Yaw_Pos = 0;
 float Test_Pitch_Veloc = 0, Test_Yaw_Veloc = 0;
-//static void Gimbal_DEBUG_Act(void)
-//{
-//    RC_Ctl_t RC_Ctl = getRCData();
+static void Gimbal_DEBUG_Act(void)
+{
+    RC_Ctl_t RC_Ctl = getRCData();
 
-//    if (Gimbal_init_flag == 0)
-//    {
-//        MotoYaw.PidPos.SetPoint = 0;   //Yaw_Actual;	  //MotoPitch.Angle_Inc;
-//        MotoPitch.PidPos.SetPoint = 0; //+ PITCH_GYRO_OFFSET; //Pitch_Actual; // Gyro_White.YAW_INC;
-//        Gimbal_init_flag = 1;
-//    }
+    if (Gimbal_init_flag == 0)
+    {
+        MotoYaw.PidPos.SetPoint = 0;   //Yaw_Actual;	  //MotoPitch.Angle_Inc;
+        MotoPitch.PidPos.SetPoint = 0; //+ PITCH_GYRO_OFFSET; //Pitch_Actual; // Gyro_White.YAW_INC;
+        Gimbal_init_flag = 1;
+    }
 
-//    MotoYaw.PidPos.SetPoint = Test_Yaw_Pos;     //RCYaw_Scal * (RC_Ctl.rc.ch2 - 1024);
-//    MotoPitch.PidPos.SetPoint = Test_Pitch_Pos; //RCPitch_Scal * (RC_Ctl.rc.ch3 - 1024) + PITCH_GYRO_OFFSET;
-//                                                //    MotoPitch.PidSpeed.SetPoint = Test_Pitch_Veloc;
-//                                                //
+    MotoYaw.PidPos.SetPoint = Test_Yaw_Pos;     //RCYaw_Scal * (RC_Ctl.rc.ch2 - 1024);
+    MotoPitch.PidPos.SetPoint = Test_Pitch_Pos; //RCPitch_Scal * (RC_Ctl.rc.ch3 - 1024) + PITCH_GYRO_OFFSET;
+                                                //    MotoPitch.PidSpeed.SetPoint = Test_Pitch_Veloc;
+    float fsend;
 
-//    float fsend;
+    //PITCH限幅+赋值
+    MotoPitch.PidPos.SetPoint = LIMIT_MAX_MIN(MotoPitch.PidPos.SetPoint, PITCH_MAX_ANGLE, PITCH_MIN_ANGLE);
+    MotoPitch.PidSpeed.SetPoint = PID_Calc(&MotoPitch.PidPos, Pitch_Actual, 0) / 1000.0f; //注：这两个 /1000.0f 跟陀螺仪返回角速度的量纲有关，如果用电机的及速度应该就不需要这个÷了
+    //MotoPitch.PidSpeed.SetPoint = 0;
+    fsend = PID_Calc(&MotoPitch.PidSpeed, Gyro_White.GY, 0);
+    MotoPitch.I_Set = LIMIT_MAX_MIN(fsend, gyroLimitPitch, -gyroLimitPitch);
 
-//    //PITCH限幅+赋值
-//    MotoPitch.PidPos.SetPoint = LIMIT_MAX_MIN(MotoPitch.PidPos.SetPoint, PITCH_MAX_ANGLE, PITCH_MIN_ANGLE);
-//    MotoPitch.PidSpeed.SetPoint = PID_Calc(&MotoPitch.PidPos, Pitch_Actual, 0) / 1000.0f; //注：这两个 /1000.0f 跟陀螺仪返回角速度的量纲有关，如果用电机的及速度应该就不需要这个÷了
-//    //MotoPitch.PidSpeed.SetPoint = 0;
-//    fsend = PID_Calc(&MotoPitch.PidSpeed, Gyro_White.GY, 0);
-//    MotoPitch.I_Set = LIMIT_MAX_MIN(fsend, gyroLimitPitch, -gyroLimitPitch);
+    //YAW  限幅+赋值
+    MotoYaw.PidPos.SetPoint = LIMIT_MAX_MIN(MotoYaw.PidPos.SetPoint, YAW_MAX_ANGLE, YAW_MIN_ANGLE);
+    MotoYaw.PidSpeed.SetPoint = PID_Calc(&MotoYaw.PidPos, Yaw_Actual, 0) / 1000.0f;
+    //MotoYaw.PidSpeed.SetPoint = 0;
+    fsend = PID_Calc(&MotoYaw.PidSpeed, Gyro_White.GZ, 0);
+    MotoYaw.I_Set = LIMIT_MAX_MIN(fsend, gyroLimitYaw, -gyroLimitYaw);
 
-//    //YAW  限幅+赋值
-//    MotoYaw.PidPos.SetPoint = LIMIT_MAX_MIN(MotoYaw.PidPos.SetPoint, YAW_MAX_ANGLE, YAW_MIN_ANGLE);
-//    MotoYaw.PidSpeed.SetPoint = PID_Calc(&MotoYaw.PidPos, Yaw_Actual, 0) / 1000.0f;
-//    //MotoYaw.PidSpeed.SetPoint = 0;
-//    fsend = PID_Calc(&MotoYaw.PidSpeed, Gyro_White.GZ, 0);
-//    MotoYaw.I_Set = LIMIT_MAX_MIN(fsend, gyroLimitYaw, -gyroLimitYaw);
-
-//    Gyro_Can2Send(MotoPitch.I_Set, MotoYaw.I_Set);
-//}
+    Gyro_Can2Send(MotoPitch.I_Set, MotoYaw.I_Set);
+}
 
 /**
   * @brief  遥控器模式下，更新上云台工作状态
@@ -103,15 +105,12 @@ float Test_Pitch_Veloc = 0, Test_Yaw_Veloc = 0;
   */
 static void Gimbal_RC_Act(void)
 {
-    RC_Ctl_t RC_Ctl = getRCData();
-
-    //    Yaw_Actual = CombYawOutput();
-    //    Pitch_Actual = CombPitchOutput();
+    extern RC_Ctl_t RC_Ctl;
 
     if (Gimbal_init_flag == 0)
     {
-        MotoYaw.PidPos.SetPoint = 0;   //Yaw_Actual;	  //MotoPitch.Angle_Inc;
-        MotoPitch.PidPos.SetPoint = 0; // + PITCH_GYRO_OFFSET; //Pitch_Actual; // Gyro_White.YAW_INC;
+        MotoYaw.PidPos.SetPoint = 0;
+        MotoPitch.PidPos.SetPoint = 0;
         Gimbal_init_flag = 1;
     }
 
@@ -121,7 +120,7 @@ static void Gimbal_RC_Act(void)
         MotoPitch.PidPos.SetPoint = Pitch_Actual;
     }
     else
-    {
+    { //如果模式没有发生变化，则正常执行遥控器赋值的部分
         MotoYaw.PidPos.SetPoint -= RCYaw_Scal * (RC_Ctl.rc.ch2 - 1024);
         MotoPitch.PidPos.SetPoint += RCPitch_Scal * (RC_Ctl.rc.ch3 - 1024); // + PITCH_GYRO_OFFSET;
     }
@@ -140,13 +139,12 @@ uint8_t patrol_dir_yaw = 0, patrol_dir_pitch = 0;                              /
 float patrol_set_pitch = 0.0f, patrol_set_yaw = 0.0f;                          //巡逻设定值更新
 int32_t PATROL_PITCH_MAX_ANGLE, PATROL_PITCH_MIN_ANGLE, PATROL_PITCH_ZERO_POS; //pitch限幅度参数
 int32_t PATROL_YAW_MAX_ANGLE, PATROL_YAW_MIN_ANGLE, PATROL_YAW_ZERO_POS;       //yaw限幅度参数
-
 static void Gimbal_PC_Act(void)
 {
     if (Gimbal_init_flag == 0)
     {
-        MotoYaw.PidPosV.SetPoint = 0;   //Yaw_Actual;//MotoPitch.Angle_Inc;
-        MotoPitch.PidPosV.SetPoint = 0; //Pitch_Actual;// Gyro_White.YAW_INC;
+        MotoYaw.PidPosV.SetPoint = 0;
+        MotoPitch.PidPosV.SetPoint = 0;
         patrol_set_pitch = 0;
         patrol_set_yaw = Yaw_Actual;
 
@@ -187,13 +185,11 @@ static void Gimbal_PC_Act(void)
                 patrol_dir_yaw = 1; //电机到右限反向
             patrol_set_pitch += (patrol_dir_pitch) ? (+patrol_step_pitch) : (-patrol_step_pitch);
             patrol_set_yaw += (patrol_dir_yaw) ? (+patrol_step_yaw) : (-patrol_step_yaw);
-            //patrol_set_yaw += patrol_step_yaw;
 
             MotoPitch.PidPosV.SetPoint = LIMIT_MAX_MIN(patrol_set_pitch, PATROL_PITCH_MAX_ANGLE, PATROL_PITCH_MIN_ANGLE);
             MotoYaw.PidPosV.SetPoint = LIMIT_MAX_MIN(patrol_set_yaw, MIN(PATROL_YAW_MAX_ANGLE,YAW_MAX_ANGLE),MAX( PATROL_YAW_MIN_ANGLE,YAW_MIN_ANGLE));
         }
     }
-
     Gimbal_PC_PID_Cal();
 }
 
@@ -242,7 +238,6 @@ static void Gimbal_PC_PID_Cal(void)
     fsend = PID_Calc(&MotoYaw.PidSpeedV, Gyro_White.GZ, 0);
     MotoYaw.I_Set = LIMIT_MAX_MIN(fsend, gyroLimitYaw, -gyroLimitYaw);
 
-
     Gyro_Can2Send(MotoPitch.I_Set, MotoYaw.I_Set);
 }
 static void Gimbal_SLEEP_PID_Cal(void)
@@ -250,14 +245,12 @@ static void Gimbal_SLEEP_PID_Cal(void)
     Gyro_Can2Send(0, 0);
 }
 
-//**姿态角滤波相关变量**//
 float moto_pitch, moto_yaw, moto_pitch_init, moto_yaw_init;
 float gyro_pitch, gyro_yaw, gyro_pitch_init, gyro_yaw_init;
 float comb_pitch, comb_yaw;
 float k_pitch = 0;
-float k_yaw = 0; //0.02;
+float k_yaw = 0; 
 int8_t init_comb_flag = 1;
-/////////////////////////////////////////
 /**
   * @brief  下云台姿态输出计算（陀螺仪值和电机值的互补滤波）
   * @param  None
@@ -296,12 +289,10 @@ static void Gimbal_GYRO_Cal(void)
   */
 static void Gimbal_Limit(void)
 {
-    //注：云台水平时 pitch=180 （也可能是0，和陀螺仪安装的方向有关）
     PITCH_MAX_ANGLE = /*PITCH_GYRO_OFFSET + */ +12.5;
     PITCH_ZERO_POS = /*PITCH_GYRO_OFFSET + */ 0;
     PITCH_MIN_ANGLE = /*PITCH_GYRO_OFFSET*/ -35;
 
-    //注： 由于YAW轴的setpoint是增量式的，故这个限幅的改动可以防止阶跃过大
     YAW_MAX_ANGLE = Yaw_Actual + 20;
     YAW_ZERO_POS = Yaw_Actual + 0;
     YAW_MIN_ANGLE = Yaw_Actual - 20;
@@ -323,13 +314,13 @@ static void Gimbal_Limit(void)
   */
 static void PID_Gimbal_Init(void)
 {
-    MotoPitch.PidPos.P = -290;  //-900.0f;
-    MotoPitch.PidPos.I = -1.2f; //-8.0f;
-    MotoPitch.PidPos.D = 0;     //-1500.0f;
+    MotoPitch.PidPos.P = -290;
+    MotoPitch.PidPos.I = -1.2f;
+    MotoPitch.PidPos.D = 0;
     MotoPitch.PidPos.IMax = 800.0f;
 
     MotoPitch.PidSpeed.P = -9000.0f;
-    MotoPitch.PidSpeed.I = -8.0f; //-270.0f;
+    MotoPitch.PidSpeed.I = -8.0f;
     MotoPitch.PidSpeed.D = 0;
     MotoPitch.PidSpeed.IMax = 500.0f;
 
@@ -343,8 +334,8 @@ static void PID_Gimbal_Init(void)
     MotoPitch.PidPosV.D = 0.0f;
     MotoPitch.PidPosV.IMax = 800.0f;
 
-    MotoPitch.PidSpeedV.P = -8000.0f;//-9000.0f;
-    MotoPitch.PidSpeedV.I = -5.0f;//-8.0f; //-270.0f;
+    MotoPitch.PidSpeedV.P = -8000.0f;
+    MotoPitch.PidSpeedV.I = -5.0f;
     MotoPitch.PidSpeedV.D = 0;
     MotoPitch.PidSpeedV.IMax = 500.0f;
     
@@ -368,10 +359,6 @@ static void PID_Gimbal_Init(void)
 //    MotoPitch.PidSpeedV.I = 0.0f; //-270.0f;
 //    MotoPitch.PidSpeedV.D = 0;
 //    MotoPitch.PidSpeedV.IMax = 0.0f;
-    
-    
-    
-
 
     /////////////////////////////////////////////////////////
 
@@ -433,20 +420,6 @@ static void PID_Gimbal_Init(void)
 //    MotoYaw.PidSpeedV.I = 0.0f;
 //    MotoYaw.PidSpeedV.D = 0.0f;
 //    MotoYaw.PidSpeedV.IMax = 0.0f;
-    
-
-    
-    
-    
-
-
-
-
-
-
-
-
-
 
 
     /////////////////////////////////////////////////////////////

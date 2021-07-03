@@ -30,7 +30,6 @@ static void Gimbal_PC_Act(void);
 static void Gimbal_SLEEP_Act(void);
 static void Gimbal_DEBUG_Act(void);
 
-
 static void Gimbal_RC_PID_Cal(void);
 static void Gimbal_PC_PID_Cal(void);
 inline static void Gimbal_SLEEP_PID_Cal(void);
@@ -72,8 +71,7 @@ static void Gimbal_DEBUG_Act(void)
 
     MotoYaw.PidPos.SetPoint = Test_Yaw_Pos;                             //+ YAW_GYRO_OFFSET;       //RCYaw_Scal * (RC_Ctl.rc.ch2 - 1024);
     MotoPitch.PidPos.SetPoint = Test_Pitch_Pos /*+ PITCH_GYRO_OFFSET*/; //RCPitch_Scal * (RC_Ctl.rc.ch3 - 1024) + PITCH_GYRO_OFFSET;
-                                                                        //   MotoPitch.PidSpeed.SetPoint = Test_Pitch_Veloc/*+ PITCH_GYRO_OFFSET*/;   //RCPitch_Scal * (RC_Ctl.rc.ch3 - 1024) + PITCH_GYRO_OFFSET;
-                                                                        //   MotoYaw.PidSpeed.SetPoint = Test_Yaw_Veloc;
+                                                                        //   MotoPitch.PidSpeed.SetPoint = Test_Pitch_Veloc/*+ PITCH_GYRO_OFFSET*/;   //RCPitch_Scal * (RC_Ctl.rc.ch3 - 1024) + PITCH_GYRO_OFFSET;                                                          //   MotoYaw.PidSpeed.SetPoint = Test_Yaw_Veloc;
     float fsend;
 
     //PITCH限幅+赋值
@@ -126,7 +124,7 @@ static void Gimbal_RC_Act(void)
   * @param  None
   * @retval None
   */
-float patrol_step_pitch = 0.035f/*0.099f*/, patrol_step_yaw = 0.013f/*0.047f*/;
+float patrol_step_pitch = 0.035f, patrol_step_yaw = 0.013f;
 uint8_t patrol_dir_yaw = 0, patrol_dir_pitch = 0;                              //标志两周电机当前巡逻的方向，0表示--，1表示++
 float patrol_set_pitch = 0.0f, patrol_set_yaw = 0.0f;                          //巡逻设定值更新
 int32_t PATROL_PITCH_MAX_ANGLE, PATROL_PITCH_MIN_ANGLE, PATROL_PITCH_ZERO_POS; //pitch限幅度参数

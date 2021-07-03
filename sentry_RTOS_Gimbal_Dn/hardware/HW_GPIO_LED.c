@@ -12,7 +12,6 @@ void LED_Configuration(void)
     GPIO_InitTypeDef       gpioInit;
     
     RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC, ENABLE);
-
     gpioInit.GPIO_Pin = GPIO_Pin_13|GPIO_Pin_14;
     gpioInit.GPIO_Mode = GPIO_Mode_OUT;
 	gpioInit.GPIO_Speed = GPIO_Speed_100MHz;
@@ -20,7 +19,6 @@ void LED_Configuration(void)
 	gpioInit.GPIO_PuPd = GPIO_PuPd_NOPULL;
     GPIO_Init(GPIOC, &gpioInit);
     GPIO_ResetBits(GPIOC,GPIO_Pin_13|GPIO_Pin_14);  
-    
 }
 
 /**
@@ -30,39 +28,12 @@ void LED_Configuration(void)
  */
 void light_toggle(void)
 {
-     if
-     (
-       GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_14) == Bit_RESET
-       && 
-       GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_13) == Bit_RESET
-     ) //·ÛµÆÁÁ
+     if(GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_14) == Bit_RESET
+       && GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_13) == Bit_RESET)
      light_off();
-     else if
-     (
-       GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_14) == Bit_SET
-       && 
-       GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_13) == Bit_SET
-     ) //·ÛµÆÃð
+     else if(GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_14) == Bit_SET
+       && GPIO_ReadOutputDataBit(GPIOC,GPIO_Pin_13) == Bit_SET)
      light_on();
-     
-//    if
-//     (
-//       GPIO_ReadOutputDataBit(GPIOH,GPIO_Pin_10) == Bit_SET
-//       && 
-//       GPIO_ReadOutputDataBit(GPIOH,GPIO_Pin_11) == Bit_SET
-//       && 
-//       GPIO_ReadOutputDataBit(GPIOH,GPIO_Pin_12) == Bit_SET
-//     ) 
-//        light_off();
-//    else if
-//     (
-//       GPIO_ReadOutputDataBit(GPIOH,GPIO_Pin_10) == Bit_RESET
-//       && 
-//       GPIO_ReadOutputDataBit(GPIOH,GPIO_Pin_11) == Bit_RESET
-//       && 
-//       GPIO_ReadOutputDataBit(GPIOH,GPIO_Pin_12) == Bit_RESET
-//     ) 
-//        light_on();
 }
 
 /**
@@ -90,17 +61,3 @@ void BLUE_light_toggle(void)
     else
         BLUE_light_on();
 }
-
-
-///**
-// *  @brief  ÂÌµÆ±ä×´Ì¬£¨ÁÁ¸ÄÃð¡¢Ãð¸ÄÁÁ£©
-// *  @param  ÎÞ
-// *  @retval ÎÞ
-// */
-//void GREEN_light_toggle(void)
-//{
-//    if(GPIO_ReadOutputDataBit(GPIOH,GPIO_Pin_11) == Bit_SET) //À¶µÆÁÁ
-//        GREEN_light_off();
-//    else
-//        GREEN_light_on();
-//}

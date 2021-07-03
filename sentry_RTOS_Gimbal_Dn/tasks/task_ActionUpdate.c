@@ -2,11 +2,15 @@
 #include "task_ActionUpdate.h"
 
 State_t Sentry_State;
-extern block_disconnect_t block_disconnect;
-int16_t Gimbal_init_flag, RC_Change_Flag_now, RC_Change_Flag_last;
-int16_t Shoot_init_flag = 0;
-//int32_t SetSpeed,RC_Chassis_scal = 5;
+block_disconnect_t block_disconnect;
+int16_t Gimbal_init_flag,Shoot_init_flag = 0;
 
+static void update_state_with_RCdata(void);
+static void sentry_state_reflect(uint8_t gimbal_up_mode,
+                                 uint8_t gimbal_dn_mode,
+                                 uint8_t shoot_up_mode,
+                                 uint8_t shoot_dn_mode,
+                                 uint8_t chassis_mode);
 /**
  * @brief 状态机本体，执行每次的状态刷新
  * @param 无
@@ -16,10 +20,7 @@ void task_ActionUpdate(void)
 {
     reset_remote_control_msg();
 
-//    vTaskDelay(900);
-//    Sentry_State.Shoot_Dn_Mode = Shoot_Dn_SLEEP;
-//    Sentry_State.Gimbal_Dn_Mode = Gimbal_Dn_SLEEP;
-
+    //底盘通信相关（掉电计数、热量控制）
     extern uint32_t chassis_offline_tick;
     extern uint8_t chassis_offline_flag;
     extern uint8_t Heat_ShootAbleFlag_2;

@@ -11,7 +11,7 @@ void TIM2_Configuration(void)
 	TIM_TimeBaseInitStruct.TIM_CounterMode=TIM_CounterMode_Up;              //计数模式（递增计数）
 	TIM_TimeBaseInitStruct.TIM_Period=24000-1;                              //f=24MHz/24000=1kHz ~ T=1.0ms（写到ARR里去）
 	TIM_TimeBaseInitStruct.TIM_ClockDivision=TIM_CKD_DIV1;                  //时钟分频数（不分频）
-    //TIM_TimeBaseInitStruct.TIM_RepetitionCounter=0;                         //重复计数器：写入0到RCR里去（即不重复的意思）（通用定时器好像没有RCR）
+    TIM_TimeBaseInitStruct.TIM_RepetitionCounter=0;                         //重复计数器：写入0到RCR里去（即不重复的意思）（通用定时器好像没有RCR）
 	TIM_TimeBaseInit(TIM2,&TIM_TimeBaseInitStruct);
 
     TIM_ClearFlag(TIM2,TIM_FLAG_Update);        //清空中断标志位

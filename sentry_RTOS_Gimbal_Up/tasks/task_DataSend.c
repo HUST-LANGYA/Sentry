@@ -38,7 +38,6 @@ void Bodan_Can2Send(int16_t bodanVal)
 	CAN_Transmit(CAN2, &tx_message);
 }
 
-
 /**
   * @brief  云台电机消息发送	
   * @param  两轴电机转速的设定值

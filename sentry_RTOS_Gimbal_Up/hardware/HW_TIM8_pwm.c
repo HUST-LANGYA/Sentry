@@ -13,12 +13,9 @@ void TIM8_Configuration(void)
 	GPIO_InitTypeDef GPIO_InitStructure;
 	TIM_OCInitTypeDef TIM_OCInitStruct;
 	TIM_TimeBaseInitTypeDef TIM_TimeBaseInitStruct;
-//	DMA_InitTypeDef DMA_InitStructure;
-//	NVIC_InitTypeDef  nvic;
     
 	RCC_APB2PeriphClockCmd(RCC_APB2Periph_TIM8,ENABLE);      //使能TIM8时钟
 	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_GPIOC,ENABLE);     //使能GPIOC时钟
-//	RCC_AHB1PeriphClockCmd(RCC_AHB1Periph_DMA1,ENABLE);      //使能DMA1时钟
 
 	GPIO_InitStructure.GPIO_Pin=GPIO_Pin_6|GPIO_Pin_7;      //PB6 TIM8--Ch1     PB7 TIM8--Ch2
     GPIO_InitStructure.GPIO_Mode=GPIO_Mode_AF;              //复用输出模式  
@@ -38,12 +35,6 @@ void TIM8_Configuration(void)
     TIM_TimeBaseInitStruct.TIM_RepetitionCounter=0;                         //重复计数器：写入0到RCR里去（即不重复的意思）
 	TIM_TimeBaseInit(TIM8,&TIM_TimeBaseInitStruct);
 	
-    //给C615的摩擦轮变速需要在每输出一次PWM波后往CCR里重写一次脉宽的值。
-    //这个功能的实现需要两个中断：
-        //1、输出完一个数字信号后的TIM定时器更新中断；
-            //在这个中断里面向DMA获取下一个写入CCR的脉宽值.
-        //2、DMA传输完成中断；
-            //在这个中断里面获取下次的脉宽值.
     TIM_OCInitStruct.TIM_OCMode = TIM_OCMode_PWM1;                          //输出比较模式设定为PWM1
 	TIM_OCInitStruct.TIM_OutputState = TIM_OutputState_Enable;              //输出比较使能（写到CCER寄存器里面去）
 	TIM_OCInitStruct.TIM_Pulse = pulse;                                     //写到CCR里去，比较寄存器的装载值（一个Period里的脉冲数）
@@ -56,20 +47,3 @@ void TIM8_Configuration(void)
     TIM_Cmd(TIM8,ENABLE);                                                    //使能TIM8外设
 	TIM_CtrlPWMOutputs(TIM8,ENABLE);                                         //主输出使能（写到BDTR里去？）
 }
-
-
-
-
-
-///**
-//  * @brief  TIM8中断处理函数
-//  * @param  
-//  * @retval None
-//  */
-//void TIM8_IRQHandler(void)
-//{
-//	if ( TIM_GetITStatus(TIM8, TIM_IT_Update) != RESET ) 
-//	{
-//        TIM_ClearFlag(TIM8, TIM_FLAG_Update);           //清除TIM8的更新事件标志
-//	}	
-//}

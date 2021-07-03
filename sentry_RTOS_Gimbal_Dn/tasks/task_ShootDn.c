@@ -4,8 +4,8 @@
 _2006_motor_t BodanMotor;
 _2006_motor_t FrictionMotor[2];
 
-int16_t num, speed;
-int16_t Is_Shoot;
+//int16_t num, speed;
+//int16_t Is_Shoot;
 
 extern int16_t Shoot_init_flag;
 extern State_t Sentry_State;
@@ -21,6 +21,17 @@ int32_t BodanDelay_Tick = 0;                        //拨弹开启的延时计数
 volatile uint8_t ShootDn_LastMode = Shoot_Dn_SLEEP; //存放上次进入shoot_task时的状态
 #define BodanDelay_Threshold 500                    //存放拨弹延时的上门限
 
+//******************内部函数声明***********************************************//
+static void PID_Shoot_Init(void);  //初始化bodan电机的PID参数
+static void Shoot_RC_Act(void);
+static void Shoot_PC_Act(void);
+static void Shoot_SLEEP_Act(void);
+static void Shoot_DEBUG_Act(void);
+
+static void Shoot_RC_PID_Cal(void);
+static void Shoot_PC_PID_Cal(void);
+inline static void Shoot_SLEEP_PID_Cal(void);
+
 void task_ShootDn(void *parameter)
 {
     //第一次进任务的复位
@@ -28,7 +39,6 @@ void task_ShootDn(void *parameter)
 
     while (1)
     {
-        //TODO:  把之前邢增宝写的延时拨弹加进来；
         ShootDn_ModeUpdate_Flag = (ShootDn_LastMode != Sentry_State.Shoot_Dn_Mode); //?  0: 1;
         ShootDn_LastMode = Sentry_State.Shoot_Dn_Mode;                              //更新上次状态
         BodanDelay_Tick = (ShootDn_ModeUpdate_Flag) ? (0) : (BodanDelay_Tick + 1);  //根据状态是否切换，判断延时tick是清零还是递增
@@ -39,11 +49,10 @@ void task_ShootDn(void *parameter)
         {
             //if(is_game_start)
             Shoot_PC_Act();
-            //
             //else Shoot_SLEEP_Act();
         }
         else if (Sentry_State.Shoot_Dn_Mode == Shoot_Dn_RC)          Shoot_RC_Act();
-        //else if (Sentry_State.Shoot_Dn_Mode == Shoot_Dn_DEBUG)    Shoot_DEBUG_Act();
+        else if (Sentry_State.Shoot_Dn_Mode == Shoot_Dn_DEBUG)    Shoot_DEBUG_Act();
         
         vTaskDelay(1);
     }
@@ -57,8 +66,8 @@ float bodanLastPos;                //存放上次单发结束时的拨弹电机位置值
 
 int16_t test_fric_speed0, test_fric_speed1;
 int8_t Bodan_Enable_DEBUG = DISABLE;
-//static void Shoot_DEBUG_Act(void)
-//{
+static void Shoot_DEBUG_Act(void)
+{
 //    FrictionWheel_SetSpeed(test_fric_speed0, test_fric_speed1); //*设置摩擦轮
 //    float fsend;
 
@@ -77,7 +86,7 @@ int8_t Bodan_Enable_DEBUG = DISABLE;
 
 //    BodanMotor.I_Set = (int16_t)LIMIT_MAX_MIN(fsend, BodanCurrentLimit, -BodanCurrentLimit);
 //    Bodan_Can2Send(/*BodanDelay_OVER?*/ BodanMotor.I_Set * Bodan_Enable_DEBUG /*:0*/); //发拨弹电流
-//}
+}
 
 //视觉瞄准函数：在激活状态下，如果实际云台姿态和CV给来的云台姿态（即敌人位置）
 float pitch_thresh = 2.0f;
@@ -88,6 +97,7 @@ static void aiming(void)
     extern float Pitch_Actual, Yaw_Actual;
     extern uint8_t armor_state; //表示辅瞄是不是有找到目标
     extern uint8_t CV_Shoot_ABLE; //判定视觉方面是否能够打子弹
+    
     if (armor_state == ARMOR_AIMED &&
         ABS((PC_Receive.RCPitch - Pitch_Actual)) <= pitch_thresh &&
         ABS((PC_Receive.RCYaw - Yaw_Actual)) <= yaw_thresh)
@@ -137,31 +147,24 @@ static void Shoot_RC_Act(void)
 
 static void Shoot_SLEEP_Act(void)
 {
-    //当从别的模式切回到射击关闭模式时，延时一段时间，先关拨弹，让摩擦轮再转一会
-    FrictionWheel_SetSpeed(/*BodanDelay_OVER?*/FrictionWheel_L_Speed_Off/*:FrictionWheel_L_Speed_Low*/, /*BodanDelay_OVER?*/FrictionWheel_R_Speed_Off/*:FrictionWheel_L_Speed_Low*/); //*关摩擦轮
+    FrictionWheel_SetSpeed(FrictionWheel_L_Speed_Off,FrictionWheel_R_Speed_Off); //*关摩擦轮
     Shoot_SLEEP_PID_Cal();
 }
 
 static void Shoot_PC_PID_Cal(void)
 {
-    BodanMotor.pid_speed.SetPoint = PID_Calc(&BodanMotor.pid_pos, BodanMotor.Angle_Inc, 0); //用位置环算速度环设定值
     float fsend;
+    BodanMotor.pid_speed.SetPoint = PID_Calc(&BodanMotor.pid_pos, BodanMotor.Angle_Inc, 0); //用位置环算速度环设定值
     fsend = PID_Calc(&BodanMotor.pid_speed, BodanMotor.RealSpeed, 0); //用速度环算电流值输出
-
     BodanMotor.I_Set = (int16_t)LIMIT_MAX_MIN(fsend, BodanCurrentLimit, -BodanCurrentLimit);
-
     Bodan_Can2Send((BodanDelay_OVER) ? BodanMotor.I_Set : 0); //发拨弹电流
 }
 
 static void Shoot_RC_PID_Cal(void)
 {
     float fsend;
-
-    //纯算pid的过程
-    //BodanMotor.pid_pos.SetPoint =  //以后看这里需不需要限幅之类的
     BodanMotor.pid_speed.SetPoint = PID_Calc(&BodanMotor.pid_pos, BodanMotor.Angle_Inc, 0); //用位置环算速度环设定值
     fsend = PID_Calc(&BodanMotor.pid_speed, BodanMotor.RealSpeed, 0);                       //用速度环算电流值输出
-
     BodanMotor.I_Set = (int16_t)LIMIT_MAX_MIN(fsend, BodanCurrentLimit, -BodanCurrentLimit);
     Bodan_Can2Send(BodanDelay_OVER ? BodanMotor.I_Set : 0); //发拨弹电流
 }

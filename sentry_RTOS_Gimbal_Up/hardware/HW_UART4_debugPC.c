@@ -40,12 +40,12 @@ void UART4_Configuration(void)
     
     USART_ClearFlag(UART4, USART_FLAG_TXE);
     
- NVIC_InitTypeDef nvicInit;
- nvicInit.NVIC_IRQChannel = UART4_IRQn;
- nvicInit.NVIC_IRQChannelPreemptionPriority = 3;
- nvicInit.NVIC_IRQChannelSubPriority = 0;
- nvicInit.NVIC_IRQChannelCmd = ENABLE;
- NVIC_Init(&nvicInit);
+    // NVIC_InitTypeDef nvicInit;
+    // nvicInit.NVIC_IRQChannel = UART4_IRQn;
+    // nvicInit.NVIC_IRQChannelPreemptionPriority = 3;
+    // nvicInit.NVIC_IRQChannelSubPriority = 0;
+    // nvicInit.NVIC_IRQChannelCmd = ENABLE;
+    // NVIC_Init(&nvicInit);
 
     //USART_DMACmd(UART4, USART_DMAReq_Tx, ENABLE);
     //{
@@ -73,11 +73,6 @@ void UART4_Configuration(void)
     //}
 }
 
-
-
-
-
-
 //重定向c库函数printf到串口，重定向后可使用printf函数
 int fputc(int ch, FILE *f)
 {   
@@ -93,9 +88,6 @@ int fgetc(FILE *f)
     return (int)USART_ReceiveData(UART4);
 }
 
-
-
-
 /**
   * @brief  UART4中断服务函数
   * @param  None
@@ -109,7 +101,6 @@ void UART4_IRQHandler(void)
     }
 }
 
-
 ///**
 //  * @brief  发送一个字节 
 //  * @param  USART外设地址
@@ -121,7 +112,6 @@ void UART4_IRQHandler(void)
 //    USART_SendData(pUSARTx, ch);  //发送一个字节数据到USART->TDR   
 //    while(USART_GetFlagStatus(pUSARTx, USART_FLAG_TXE) == RESET) ;//等待发送数据寄存器TDR清空   
 //}
-
 
 ///**
 //  * @brief  发送8位的数组  
@@ -143,7 +133,6 @@ void UART4_IRQHandler(void)
 //    while (USART_GetFlagStatus(pUSARTx, USART_FLAG_TC) == RESET) ;// 等待发送完成
 //    DMA_Cmd(DMA1_Stream4,DISABLE);
 //}
-
 
 ///**
 //  * @brief  发送字符串
@@ -175,8 +164,3 @@ void UART4_IRQHandler(void)
 //    USART_SendByte(pUSARTx, temp_h); /* 发送高八位 */
 //    USART_SendByte(pUSARTx, temp_l);  /* 发送低八位 */
 //}
-
-
-
-
-

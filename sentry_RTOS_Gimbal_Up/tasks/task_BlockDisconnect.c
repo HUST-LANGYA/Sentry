@@ -6,7 +6,7 @@
 //TODO! 在那些需要计数的地方，自己加自己的就行了
 
 //extern _2006_motor_t BodanMotor;
-//extern block_disconnect_t block_disconnect;   //这个到时候大概要做成消息队列，在不同的task之间给它改值
+//extern block_disconnect_t block_disconnect;
 
 static void disconnect_count(void);//掉电时间计数器
 static void disconnect_reset(void);//掉电计数值复位
@@ -17,7 +17,7 @@ static void disconnect_reset(void);//掉电计数值复位
   */
 void task_BlockDisconnect(void)
 {
-  /*这里面是之前裸机时写的掉电检测*/  {
+//  /*这里面是之前裸机时写的掉电检测*/  {
 //	int32_t timenow;// = /*这个地方要用FreeRTOS给的API了到时候*///GetSysCnt();
 
 //	if (timenow - block_disconnect.PC_Last_Cnt > 10)		//pc
@@ -128,7 +128,7 @@ void task_BlockDisconnect(void)
 ////	else
 ////		block_disconnect.Bodan_block=0;
 
-}
+//}
 
     
     disconnect_reset();//初次进入掉电检测任务时执行一次复位

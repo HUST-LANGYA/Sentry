@@ -1,4 +1,6 @@
 #include "main.h"
+#include "HW_FrictionWheel.h"
+
 /**
   * @brief  设置摩擦轮转速（油门值）
   * @param  两轮速度值
@@ -26,7 +28,7 @@ void FrictionWheel_SetSpeed(uint16_t tmpAccelerator0, uint16_t tmpAccelerator1)
     //限幅
     accelerator0=LIMIT_MAX_MIN(tmpAccelerator0,710,400);
     accelerator1=LIMIT_MAX_MIN(tmpAccelerator1,710,400);
-    //这里放成变量是方便调试时观察
+
     //赋值
     TIM_SetCompare1(TIM8,accelerator0);
     TIM_SetCompare2(TIM8,accelerator1);

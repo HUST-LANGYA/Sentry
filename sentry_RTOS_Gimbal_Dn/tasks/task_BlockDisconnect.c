@@ -1,10 +1,12 @@
 #include "main.h"
 
+//TODO! 这个掉电检测考虑不做成独立的task了
+//TODO! 在这个block_disconnect 结构体里面把
+//TODO! 需要做掉电检测的的tick和flag放进去，
+//TODO! 在那些需要计数的地方，自己加自己的就行了
 
-
-int16_t is_locked = 0;
 //extern _2006_motor_t BodanMotor;
-block_disconnect_t block_disconnect;   //这个到时候大概要做成消息队列，在不同的task之间给它改值
+//extern block_disconnect_t block_disconnect;
 
 static void disconnect_count(void);//掉电时间计数器
 static void disconnect_reset(void);//掉电计数值复位

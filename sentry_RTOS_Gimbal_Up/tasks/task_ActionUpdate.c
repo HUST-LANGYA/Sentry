@@ -10,7 +10,7 @@ static void sentry_state_reflect(uint8_t gimbal_up_mode,
                                  uint8_t gimbal_dn_mode,
                                  uint8_t shoot_up_mode,
                                  uint8_t shoot_dn_mode,
-                                 uint8_t chassis_mode);  //reflect当作做一个映射的意思吧
+                                 uint8_t chassis_mode);
 
 /**
  * @brief 状态机本体，执行每次的状态刷新

@@ -1,12 +1,12 @@
 #include "main.h"
-/*--------------------------内部变量----------------------------*/
+#include "task_ZeroCheck.h"
 
-/*--------------------------外部引用变量----------------------------*/
 extern gyro_Typedef Gyro_White;
 extern gimbal_motor_t MotoPitch, MotoYaw;
 extern _2006_motor_t BodanMotor;
 extern _2006_motor_t FrictionMotor[];
-/*--------------------------函数部分----------------------------*/
+
+static float ZeroCheck(ZeroCheck_Typedef *Zero,float value,int16_t Zerocheck_mode);
 
 /**
   * @brief  过零检测任务
@@ -15,8 +15,6 @@ extern _2006_motor_t FrictionMotor[];
   */
 void task_ZeroCheck(void)
 {
-    // ! 好像过零检测结构体也要初始化一下的样子？ 
-    // ! 记不太清楚了已经（当时这里就没有学清楚话说）
     while (1)
     {
         MotoPitch.Angle_Inc = ZeroCheck(&MotoPitch.zerocheck, MotoPitch.Angle_ABS, Position);        //云台PITCH电机
@@ -31,9 +29,6 @@ void task_ZeroCheck(void)
 }
 
 
-// !  inline 是C99之后的编译器才支持的好像 
-// ! 如果keil编译出错的话 就把inline的 改成带参宏函数吧
-// ! 到时候这些小函数 应该都要改成任务间通信用的信号量了
 inline float PitchAngleOutPut(void)
 {
     return MotoPitch.Angle_Inc;
@@ -53,11 +48,6 @@ inline float GyroYawOutPut(void)
 {
     return Gyro_White.YAW_INC;
 }
-
-
-
-
-
 
 /**
   * @brief  位置式和速度式过零检测
@@ -96,4 +86,3 @@ static float ZeroCheck(ZeroCheck_Typedef *Zero, float value, int16_t Zerocheck_m
     else
         return 0;
 }
-

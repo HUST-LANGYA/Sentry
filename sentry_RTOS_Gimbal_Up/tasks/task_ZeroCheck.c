@@ -83,4 +83,3 @@ static float ZeroCheck(ZeroCheck_Typedef *Zero, float value, int16_t Zerocheck_m
     else
         return 0;
 }
-

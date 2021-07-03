@@ -30,4 +30,3 @@ void task_UsageCPU(void)
         vTaskDelay(1000);
     }
 }
-
